@@ -69,3 +69,9 @@ YouTube: https://www.youtube.com/@EMMIR_KC/videos
 Discord: https://discord.gg/hdYctSmyQJ
 
 itch.io: https://kingscrook.itch.io/kings-crook
+
+## License
+There is no explicit license but feel free to use the code.
+If you release anything with it, a comment in your code/README
+saying where you got this code would be a nice gesture but it’s not mandatory.
+Thank you for your interest!
