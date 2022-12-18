@@ -7,6 +7,7 @@ NTSC video signal encoding / decoding emulation by EMMIR 2018-2023
 
 The result of going down a very deep rabbit hole.
 I learned a lot about analog signal processing, television, and the NTSC standard in the process.
+Written to be compatible with C89.
 
 Just like King's Crook (my from-scratch 3D game), this code follows the same restrictions:
 
