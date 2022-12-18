@@ -497,8 +497,7 @@ crt_draw(struct CRT *v, int noise)
     
     for (i = 0; i < CRT_INPUT_SIZE; i++) {
         static int rn = 194; /* 'random' noise */
-        int s;
-        
+
         rn = (214019 * rn + 140327895);
 
         /* signal + noise */
