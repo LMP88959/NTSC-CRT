@@ -29,17 +29,15 @@ Feature List:
 - Signal noise (optional)
 - Interlaced and progressive scan
 - Monochrome and full color
-
-Note the command line program provided does not let you mess with all the settings
+## Important
+The command line program provided does not let you mess with all the settings
 like black/white point, brightness, saturation, and contrast.
 
 In the ntsc_crt.c file, there are two main()'s.
 One is for a command line program and the other uses my FW library (found here https://github.com/LMP88959/PL3D-KC)
 to provide real-time NTSC emulation with adjustable parameters.
 
-================================================================
-
-Compiling:
+## Compiling
 ```
   cd NTSC-CRT
   
