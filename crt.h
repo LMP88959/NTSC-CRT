@@ -65,7 +65,7 @@ extern void crt_resize(struct CRT *v, int w, int h, int *out);
 extern void crt_reset(struct CRT *v);
 
 struct NTSC_SETTINGS {
-    int *rgb;       /* 32-bit RGB image data (packed as 0xXXRRGGBB) */
+    const int *rgb; /* 32-bit RGB image data (packed as 0xXXRRGGBB) */
     int w, h;       /* width and height of image */
     int as_color;   /* 0 = monochrome, 1 = full color */
     int field;      /* 0 = even, 1 = odd */
