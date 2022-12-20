@@ -1,9 +1,9 @@
 /*****************************************************************************/
 /*
  * NTSC/CRT - integer-only NTSC video signal encoding / decoding emulation
- * 
+ *
  *   by EMMIR 2018-2023
- *   
+ *
  *   YouTube: https://www.youtube.com/@EMMIR_KC/videos
  *   Discord: https://discord.com/invite/hdYctSmyQJ
  */
@@ -11,13 +11,17 @@
 #ifndef _CRT_H_
 #define _CRT_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* crt.h
- * 
+ *
  * An interface to convert a digital image to an analog NTSC signal
  * and decode the NTSC signal back into a digital image.
  * Can easily be integrated into real-time applications
  * or be used as a command-line tool.
- * 
+ *
  */
 
 /* SAMPLE RATE: 14.31818 MHz.
@@ -61,7 +65,7 @@ extern void crt_resize(struct CRT *v, int w, int h, int *out);
 extern void crt_reset(struct CRT *v);
 
 struct NTSC_SETTINGS {
-    int *rgb;       /* 32-bit RGB image data (packed as 0xXXRRGGBB) */
+    const int *rgb; /* 32-bit RGB image data (packed as 0xXXRRGGBB) */
     int w, h;       /* width and height of image */
     int as_color;   /* 0 = monochrome, 1 = full color */
     int field;      /* 0 = even, 1 = odd */
@@ -76,5 +80,9 @@ extern void crt_2ntsc(struct CRT *v, struct NTSC_SETTINGS *s);
  *   noise - the amount of noise added to the signal (0 - inf)
  */
 extern void crt_draw(struct CRT *v, int noise);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
