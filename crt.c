@@ -359,8 +359,13 @@ extern void
 crt_2ntsc(struct CRT *v, struct NTSC_SETTINGS *s)
 {
     int cc[4] = { 0, 1, 0, -1 }; /* color carrier phase */
+#if CRT_DO_BLOOM
     int destw = (AV_LEN * 55500) >> 16;
     int desth = (CRT_LINES * 63500) >> 16;
+#else
+    int destw = AV_LEN;
+    int desth = (CRT_LINES * 64500) >> 16;
+#endif
     int x, y, xo, yo;
     int n;
     
@@ -485,8 +490,10 @@ crt_draw(struct CRT *v, int noise)
         int y, i, q;
     } out[AV_LEN + 1], *yiqA, *yiqB;
     int i, j, line;
+#if CRT_DO_BLOOM
     int prev_e; /* filtered beam energy per scan line */
     int max_e; /* approx maximum energy in a scan line */
+#endif
     int bright = v->brightness - (BLACK_LEVEL + v->black_point);
     signed char *sig;
     int s = 0;
@@ -534,9 +541,10 @@ vsync_found:
     v->vsync = line; /* vsync found (or gave up) at this line */
     /* if vsync signal was in second half of line, odd field */
     field = (j > (CRT_HRES / 2));
-    
+#if CRT_DO_BLOOM
     max_e = (128 + (noise / 2)) * AV_LEN;
     prev_e = (16384 / 8);
+#endif
     /* ratio of output height to active video lines in the signal */
     ratio = (v->outh << 16) / CRT_LINES;
     ratio = (ratio + 32768) >> 16;
@@ -597,6 +605,7 @@ vsync_found:
         wave[3] = -dci * v->saturation;
 
         sig = v->inp + pos;
+#if CRT_DO_BLOOM
         s = 0;
         for (i = 0; i < AV_LEN; i++) {
             s += sig[i]; /* sum up the scan line */
@@ -611,7 +620,13 @@ vsync_found:
         
         L = (scanL >> 12);
         R = (scanR >> 12);
- 
+#else
+        dx = ((AV_LEN - 1) << 12) / v->outw;
+        scanL = 0;
+        scanR = (AV_LEN - 1) << 12;
+        L = 0;
+        R = (AV_LEN - 1);
+#endif
         reset_eq(&eqY);
         reset_eq(&eqI);
         reset_eq(&eqQ);
