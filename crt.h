@@ -28,6 +28,9 @@ extern "C" {
  * Which, divided by 4, gives us 3.579545 MHz for the chroma carrier
  */
 
+/* do bloom emulation (side effect: makes screen have black borders) */
+#define CRT_DO_BLOOM    0
+
 #define CRT_CB_FREQ     4 /* carrier frequency relative to sample rate */
 #define CRT_HRES        (2275 * CRT_CB_FREQ / 10) /* horizontal resolution */
 #define CRT_VRES        262                       /* vertical resolution */
