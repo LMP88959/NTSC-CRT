@@ -29,7 +29,9 @@ extern "C" {
  */
 
 /* do bloom emulation (side effect: makes screen have black borders) */
-#define CRT_DO_BLOOM    0
+#define CRT_DO_BLOOM    1
+#define CRT_DO_VSYNC    1  /* look for VSYNC */
+#define CRT_DO_HSYNC    1  /* look for HSYNC */
 
 #define CRT_CB_FREQ     4 /* carrier frequency relative to sample rate */
 #define CRT_HRES        (2275 * CRT_CB_FREQ / 10) /* horizontal resolution */
