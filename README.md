@@ -2,8 +2,10 @@
 NTSC video signal encoding / decoding emulation by EMMIR 2018-2023
 ================================================================
 
-![alt text](/scube.png?raw=true)
-![alt text](/kc.png?raw=true)
+### Click the image to see a YouTube video of it running in real time:
+[![alt text](/scube.png?raw=true)](https://www.youtube.com/watch?v=ucfPRtV6--c)
+### Click the image to see a YouTube video of it running in real time:
+[![alt text](/kc.png?raw=true)](https://www.youtube.com/watch?v=ucfPRtV6--c)
 
 The result of going down a very deep rabbit hole.
 I learned a lot about analog signal processing, television, and the NTSC standard in the process.
