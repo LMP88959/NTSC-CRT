@@ -538,7 +538,11 @@ crt_draw(struct CRT *v, int noise)
         }
     }
 vsync_found:
+#if CRT_DO_VSYNC
     v->vsync = line; /* vsync found (or gave up) at this line */
+#else
+    v->vsync = 0;
+#endif
     /* if vsync signal was in second half of line, odd field */
     field = (j > (CRT_HRES / 2));
 #if CRT_DO_BLOOM
@@ -581,7 +585,11 @@ vsync_found:
                 break;
             }
         }
+#if CRT_DO_HSYNC
         v->hsync = POSMOD(i + v->hsync, CRT_HRES);
+#else
+        v->hsync = 0;
+#endif
        
         sig = v->inp + ln + (v->hsync & ~3); /* burst @ 1/CB_FREQ sample rate */
         for (i = CB_BEG; i < CB_BEG + (CB_CYCLES * CRT_CB_FREQ); i++) {
