@@ -65,8 +65,13 @@
 #define BLANK_LEVEL      0
 #define SYNC_LEVEL      -40
 
+#if CRT_DO_CHK_C
 /* 227.5 subcarrier cycles per line means every other line has reversed phase */
 #define CC_PHASE(ln)     (((ln) & 1) ? -1 : 1)
+#else
+#define CC_PHASE(ln)     (1)
+#endif
+
 /* ensure negative values for x get properly modulo'd */
 #define POSMOD(x, n)     (((x) % (n) + (n)) % (n))
 
