@@ -559,7 +559,9 @@ vsync_found:
         unsigned pos, ln;
         int scanL, scanR, dx;
         int L, R;
+#if CRT_DO_BLOOM
         int line_w;
+#endif
         int *cL, *cR;
         int wave[4];
         int dci, dcq; /* decoded I, Q */
@@ -633,7 +635,7 @@ vsync_found:
         scanL = 0;
         scanR = (AV_LEN - 1) << 12;
         L = 0;
-        R = (AV_LEN - 1);
+        R = AV_LEN;
 #endif
         reset_eq(&eqY);
         reset_eq(&eqI);
