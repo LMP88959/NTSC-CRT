@@ -32,9 +32,20 @@ extern "C" {
 #define CRT_DO_BLOOM    1
 #define CRT_DO_VSYNC    1  /* look for VSYNC */
 #define CRT_DO_HSYNC    1  /* look for HSYNC */
+/* 0 = vertical  chroma (228 chroma clocks per line) */
+/* 1 = checkered chroma (227.5 chroma clocks per line) */
+#define CRT_DO_CHK_C    0
+
+/* chroma clocks (subcarrier cycles) per line */
+#if CRT_DO_CHK_C
+#define CRT_CC_LINE 2275
+#else
+/* this will give the 'rainbow' effect in the famous waterwall scene */
+#define CRT_CC_LINE 2280
+#endif
 
 #define CRT_CB_FREQ     4 /* carrier frequency relative to sample rate */
-#define CRT_HRES        (2275 * CRT_CB_FREQ / 10) /* horizontal resolution */
+#define CRT_HRES        (CRT_CC_LINE * CRT_CB_FREQ / 10) /* horizontal res */
 #define CRT_VRES        262                       /* vertical resolution */
 #define CRT_INPUT_SIZE  (CRT_HRES * CRT_VRES)
 
