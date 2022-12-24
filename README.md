@@ -26,11 +26,15 @@ to emulate NTSC output.
 ================================================================
 Feature List:
 
-- Somewhat realistic/accurate NTSC image output with bandlimited luma/chroma
+- Somewhat realistic/accurate composite NTSC image output
+  > with bandlimited luma/chroma
+  > color artifacts (extends to being able to show specially patterned b/w images as color)
 - VSYNC and HSYNC
 - Signal noise (optional)
 - Interlaced and progressive scan
 - Monochrome and full color
+- Vertically aligned chroma OR checkerboard chroma (specified in #define in header)
+ 
 ## Important
 The command line program provided does not let you mess with all the settings
 like black/white point, brightness, saturation, and contrast.
@@ -39,7 +43,8 @@ In the ntsc_crt.c file, there are two main()'s.
 One is for a command line program and the other uses my FW library (found here https://github.com/LMP88959/PL3D-KC)
 to provide real-time NTSC emulation with adjustable parameters.
 
-The famous waterfall 'rainbow' effect created as a result of dithering will show if it is compiled with `CRT_DO_CHK_C` set to 0
+The famous waterfall 'rainbow' effect created as a result of dithering will show if it is compiled with `CRT_DO_CHK_C` set to 0.
+Specially patterned black and white images can be encoded/decoded with color just like a real composite NTSC display.
 
 ## Compiling
 ```
@@ -50,18 +55,20 @@ The famous waterfall 'rainbow' effect created as a result of dithering will show
 ```
 
 ```
-usage: ./a.out -m|o|f|p|h outwidth outheight noise infile outfile
-sample usage: ./a.out -op 640 480 24 in.ppm out.ppm
-sample usage: ./a.out - 832 624 0 in.ppm out.ppm
+usage: ./ntsc -m|o|f|p|r|h outwidth outheight noise phase_offset infile outfile
+sample usage: ./ntsc -op 640 480 24 3 in.ppm out.ppm
+sample usage: ./ntsc - 832 624 0 2 in.ppm out.ppm
 -- NOTE: the - after the program name is required
+	phase_offset is [0, 1, 2, or 3] +1 means a color phase change of 90 degrees
 ------------------------------------------------------------
-  m : monochrome
-  o : do not prompt when overwriting files
-  f : odd field (only meaningful in progressive mode)
-  p : progressive scan (rather than interlaced)
-  h : print help
+	m : monochrome
+	o : do not prompt when overwriting files
+	f : odd field (only meaningful in progressive mode)
+	p : progressive scan (rather than interlaced)
+	r : raw image (needed for images that use artifact colors)
+	h : print help
 
-by default, the image will be full color and interlaced
+by default, the image will be full color, interlaced, and scaled to the output dimensions
 ```
 If you have any questions feel free to leave a comment on YouTube OR
 join the King's Crook Discord server :)
