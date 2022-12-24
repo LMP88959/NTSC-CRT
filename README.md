@@ -26,9 +26,9 @@ to emulate NTSC output.
 ================================================================
 Feature List:
 
-- Somewhat realistic/accurate composite NTSC image output
-  > with bandlimited luma/chroma
-  > color artifacts (extends to being able to show specially patterned b/w images as color)
+- Somewhat realistic/accurate composite NTSC image output  
+  -- with bandlimited luma/chroma  
+  -- color artifacts (extends to being able to show specially patterned b/w images as color)  
 - VSYNC and HSYNC
 - Signal noise (optional)
 - Interlaced and progressive scan
