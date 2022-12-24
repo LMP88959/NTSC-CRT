@@ -26,6 +26,8 @@ static int dooverwrite = 1;
 static int docolor = 1;
 static int field = 0;
 static int progressive = 0;
+static int raw = 0;
+static int phase_offset = 0;
 
 static int
 stoint(char *s, int *err)
@@ -53,18 +55,20 @@ static void
 usage(char *p)
 {
     printf(DRV_HEADER);
-    printf("usage: %s -m|o|f|p|h outwidth outheight noise infile outfile\n", p);
-    printf("sample usage: %s -op 640 480 24 in.ppm out.ppm\n", p);
-    printf("sample usage: %s - 832 624 0 in.ppm out.ppm\n", p);
+    printf("usage: %s -m|o|f|p|r|h outwidth outheight noise phase_offset infile outfile\n", p);
+    printf("sample usage: %s -op 640 480 24 3 in.ppm out.ppm\n", p);
+    printf("sample usage: %s - 832 624 0 2 in.ppm out.ppm\n", p);
     printf("-- NOTE: the - after the program name is required\n");
+    printf("\tphase_offset is [0, 1, 2, or 3] +1 means a color phase change of 90 degrees\n");
     printf("------------------------------------------------------------\n");
     printf("\tm : monochrome\n");
     printf("\to : do not prompt when overwriting files\n");
     printf("\tf : odd field (only meaningful in progressive mode)\n");
     printf("\tp : progressive scan (rather than interlaced)\n");
+    printf("\tr : raw image (needed for images that use artifact colors)\n");
     printf("\th : print help\n");
     printf("\n");
-    printf("by default, the image will be full color and interlaced\n");
+    printf("by default, the image will be full color, interlaced, and scaled to the output dimensions\n");
 }
 
 static int
@@ -82,6 +86,7 @@ process_args(int argc, char **argv)
             case 'o': dooverwrite = 0; break;
             case 'f': field = 1;       break;
             case 'p': progressive = 1; break;
+            case 'r': raw = 1;         break;
             case 'h': usage(argv[0]); return 0;
             default:
                 fprintf(stderr, "Unrecognized flag '%c'\n", *flags);
@@ -135,8 +140,9 @@ main(int argc, char **argv)
     char *input_file;
     char *output_file;
     int err = 0;
+    int phase_ref[4] = { 0, 1, 0, -1 };
 
-    if (argc < 7) {
+    if (argc < 8) {
         usage(argv[0]);
         return EXIT_FAILURE;
     }
@@ -164,14 +170,20 @@ main(int argc, char **argv)
     
     if (noise < 0) noise = 0;
 
+    phase_offset = stoint(argv[5], &err);
+    if (err) {
+        return EXIT_FAILURE;
+    }
+    phase_offset &= 3;
+    
     output = calloc(outw * outh, sizeof(int));
     if (output == NULL) {
         printf("out of memory\n");
         return EXIT_FAILURE;
     }
     
-    input_file = argv[5];
-    output_file = argv[6];
+    input_file = argv[6];
+    output_file = argv[7];
 
     if (!ppm_read24(input_file, &img, &imgw, &imgh, calloc)) {
         printf("unable to read image\n");
@@ -190,6 +202,12 @@ main(int argc, char **argv)
     ntsc.h = imgh;
     ntsc.as_color = docolor;
     ntsc.field = field & 1;
+    ntsc.raw = raw;
+    ntsc.cc[0] = phase_ref[(phase_offset + 0) & 3];
+    ntsc.cc[1] = phase_ref[(phase_offset + 1) & 3];
+    ntsc.cc[2] = phase_ref[(phase_offset + 2) & 3];
+    ntsc.cc[3] = phase_ref[(phase_offset + 3) & 3];
+    
     printf("converting to %dx%d...\n", outw, outh);
     err = 0;
     /* accumulate 4 frames */
@@ -232,6 +250,7 @@ static int color = 1;
 static int noise = 24;
 static int field = 0;
 static int progressive = 0;
+static int raw = 0;
 
 static void
 updatecb(void)
@@ -307,6 +326,10 @@ updatecb(void)
         progressive ^= 1;
         printf("progressive: %d\n", progressive);
     }
+    if (pkb_key_pressed('t')) {
+        raw ^= 1;
+        printf("raw: %d\n", raw);
+    }
 
     if (!progressive) {
         field ^= 1;
@@ -342,6 +365,12 @@ displaycb(void)
     ntsc.h = imgh;
     ntsc.as_color = color;
     ntsc.field = field & 1;
+    ntsc.raw = raw;
+    ntsc.cc[0] = 0;
+    ntsc.cc[1] = 1;
+    ntsc.cc[2] = 0;
+    ntsc.cc[3] = -1;
+    
     crt_2ntsc(&crt, &ntsc);
     
     crt_draw(&crt, noise);
