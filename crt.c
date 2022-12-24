@@ -363,17 +363,37 @@ crt_init(struct CRT *v, int w, int h, int *out)
 extern void
 crt_2ntsc(struct CRT *v, struct NTSC_SETTINGS *s)
 {
-    int cc[4] = { 0, 1, 0, -1 }; /* color carrier phase */
-#if CRT_DO_BLOOM
-    int destw = (AV_LEN * 55500) >> 16;
-    int desth = (CRT_LINES * 63500) >> 16;
-#else
-    int destw = AV_LEN;
-    int desth = (CRT_LINES * 64500) >> 16;
-#endif
     int x, y, xo, yo;
+    int destw = AV_LEN;
+    int desth = ((CRT_LINES * 64500) >> 16);
     int n;
-    
+#if CRT_DO_BLOOM
+    if (s->raw) {
+        destw = s->w;
+        desth = s->h;
+        if (destw > ((AV_LEN * 55500) >> 16)) {
+            destw = ((AV_LEN * 55500) >> 16);
+        }
+        if (desth > ((CRT_LINES * 63500) >> 16)) {
+            desth = ((CRT_LINES * 63500) >> 16);
+        }
+    } else {
+        destw = (AV_LEN * 55500) >> 16;
+        desth = (CRT_LINES * 63500) >> 16;
+    }
+#else
+    if (s->raw) {
+        destw = s->w;
+        desth = s->h;
+        if (destw > AV_LEN) {
+            destw = AV_LEN;
+        }
+        if (desth > ((CRT_LINES * 64500) >> 16)) {
+            desth = ((CRT_LINES * 64500) >> 16);
+        }
+    }
+#endif
+
     xo = AV_BEG  + 4 + (AV_LEN    - destw) / 2;
     yo = CRT_TOP + 4 + (CRT_LINES - desth) / 2;
     
@@ -417,7 +437,7 @@ crt_2ntsc(struct CRT *v, struct NTSC_SETTINGS *s)
             if (s->as_color) {
                 /* CB_CYCLES of color burst at 3.579545 Mhz */
                 for (t = CB_BEG; t < CB_BEG + (CB_CYCLES * CRT_CB_FREQ); t++) {
-                    line[t] = BLANK_LEVEL + (cc[(t + 0) & 3] * BURST_LEVEL);
+                    line[t] = BLANK_LEVEL + (s->cc[(t + 0) & 3] * BURST_LEVEL);
                 }
             }
         }
@@ -473,8 +493,8 @@ crt_2ntsc(struct CRT *v, struct NTSC_SETTINGS *s)
             ire = BLACK_LEVEL + v->black_point;
             /* bandlimit Y,I,Q */
             fy = iirf(&iirY, fy);
-            fi = iirf(&iirI, fi) * ph * cc[(x + 0) & 3];
-            fq = iirf(&iirQ, fq) * ph * cc[(x + 3) & 3];
+            fi = iirf(&iirI, fi) * ph * s->cc[(x + 0) & 3];
+            fq = iirf(&iirQ, fq) * ph * s->cc[(x + 3) & 3];
             ire += (fy + fi + fq) * (WHITE_LEVEL * v->white_point / 100) >> 10;
             if (ire < 0)   ire = 0;
             if (ire > 110) ire = 110;

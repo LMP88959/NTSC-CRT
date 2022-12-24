@@ -24,10 +24,6 @@ extern "C" {
  *
  */
 
-/* SAMPLE RATE: 14.31818 MHz.
- * Which, divided by 4, gives us 3.579545 MHz for the chroma carrier
- */
-
 /* do bloom emulation (side effect: makes screen have black borders) */
 #define CRT_DO_BLOOM    1
 #define CRT_DO_VSYNC    1  /* look for VSYNC */
@@ -40,7 +36,7 @@ extern "C" {
 #if CRT_DO_CHK_C
 #define CRT_CC_LINE 2275
 #else
-/* this will give the 'rainbow' effect in the famous waterwall scene */
+/* this will give the 'rainbow' effect in the famous waterfall scene */
 #define CRT_CC_LINE 2280
 #endif
 
@@ -83,8 +79,14 @@ extern void crt_reset(struct CRT *v);
 struct NTSC_SETTINGS {
     const int *rgb; /* 32-bit RGB image data (packed as 0xXXRRGGBB) */
     int w, h;       /* width and height of image */
+    int raw;        /* 0 = scale image to fit monitor, 1 = don't scale */
     int as_color;   /* 0 = monochrome, 1 = full color */
     int field;      /* 0 = even, 1 = odd */
+    /* color carrier sine wave.
+     * ex: { 0, 1, 0, -1 }
+     * ex: { 1, 0, -1, 0 }
+     */
+    int cc[4];      
 };
 
 /* Convert RGB image to analog NTSC signal
