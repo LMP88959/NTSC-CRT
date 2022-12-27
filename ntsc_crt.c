@@ -1,9 +1,9 @@
 /*****************************************************************************/
 /*
  * NTSC/CRT - integer-only NTSC video signal encoding / decoding emulation
- * 
+ *
  *   by EMMIR 2018-2023
- *   
+ *
  *   YouTube: https://www.youtube.com/@EMMIR_KC/videos
  *   Discord: https://discord.com/invite/hdYctSmyQJ
  */
@@ -16,7 +16,9 @@
 #include <errno.h>
 #include "ppm_rw.h"
 
+#ifndef CMD_LINE_VERSION
 #define CMD_LINE_VERSION 1
+#endif
 
 #if CMD_LINE_VERSION
 
@@ -34,7 +36,7 @@ stoint(char *s, int *err)
 {
     char *tail;
     long val;
-    
+
     errno = 0;
     *err = 0;
     val = strtol(s, &tail, 10);
@@ -146,13 +148,13 @@ main(int argc, char **argv)
         usage(argv[0]);
         return EXIT_FAILURE;
     }
-    
+
     if (!process_args(argc, argv)) {
         return EXIT_FAILURE;
     }
 
     printf(DRV_HEADER);
-        
+
     outw = stoint(argv[2], &err);
     if (err) {
         return EXIT_FAILURE;
@@ -167,7 +169,7 @@ main(int argc, char **argv)
     if (err) {
         return EXIT_FAILURE;
     }
-    
+
     if (noise < 0) noise = 0;
 
     phase_offset = stoint(argv[5], &err);
@@ -175,13 +177,13 @@ main(int argc, char **argv)
         return EXIT_FAILURE;
     }
     phase_offset &= 3;
-    
+
     output = calloc(outw * outh, sizeof(int));
     if (output == NULL) {
         printf("out of memory\n");
         return EXIT_FAILURE;
     }
-    
+
     input_file = argv[6];
     output_file = argv[7];
 
@@ -194,7 +196,7 @@ main(int argc, char **argv)
     if (!promptoverwrite(output_file)) {
         return EXIT_FAILURE;
     }
-  
+
     crt_init(&crt, outw, outh, output);
 
     ntsc.rgb = img;
@@ -207,7 +209,7 @@ main(int argc, char **argv)
     ntsc.cc[1] = phase_ref[(phase_offset + 1) & 3];
     ntsc.cc[2] = phase_ref[(phase_offset + 2) & 3];
     ntsc.cc[3] = phase_ref[(phase_offset + 3) & 3];
-    
+
     printf("converting to %dx%d...\n", outw, outh);
     err = 0;
     /* accumulate 4 frames */
@@ -229,7 +231,7 @@ main(int argc, char **argv)
     return EXIT_SUCCESS;
 }
 #else
-#include <fw/fw.h>
+#include "fw.h"
 #if 0
 #define XMAX 624
 #define YMAX 832
@@ -254,7 +256,7 @@ static int raw = 0;
 
 static void
 updatecb(void)
-{    
+{
     if (pkb_key_pressed(FW_KEY_ESCAPE)) {
         sys_shutdown();
     }
@@ -276,7 +278,7 @@ updatecb(void)
         crt.white_point -= 1;
         printf("crt.white_point   %d\n", crt.white_point);
     }
-    
+
     if (pkb_key_held(FW_KEY_ARROW_UP)) {
         crt.brightness += 1;
         printf("%d\n", crt.brightness);
@@ -341,9 +343,9 @@ fade_phosphors(void)
 {
     int i, *v;
     unsigned int c;
-    
+
     v = video;
-    
+
     for (i = 0; i < info->width * info->height; i++) {
         c = v[i] & 0xffffff;
         v[i] = (c >> 1 & 0x7f7f7f) +
@@ -357,9 +359,9 @@ static void
 displaycb(void)
 {
     static struct NTSC_SETTINGS ntsc;
-    
+
     fade_phosphors();
-    
+
     ntsc.rgb = img;
     ntsc.w = imgw;
     ntsc.h = imgh;
@@ -370,9 +372,9 @@ displaycb(void)
     ntsc.cc[1] = 1;
     ntsc.cc[2] = 0;
     ntsc.cc[3] = -1;
-    
+
     crt_2ntsc(&crt, &ntsc);
-    
+
     crt_draw(&crt, noise);
 
     vid_swapbuffers();
@@ -383,38 +385,43 @@ int
 main(int argc, char **argv)
 {
     int werr;
-    
+
     sys_init();
     sys_updatefunc(updatecb);
     sys_displayfunc(displaycb);
     sys_keybfunc(pkb_keyboard);
     sys_keybupfunc(pkb_keyboardup);
-    
+
     clk_mode(FW_CLK_MODE_HIRES);
     pkb_reset();
     sys_sethz(60);
     sys_capfps(1);
-    
+
     werr = vid_open("crt", XMAX, YMAX, 1, FW_VFLAG_VIDFAST);
     if (werr != FW_VERR_OK) {
         FW_error("unable to create window\n");
         return EXIT_FAILURE;
     }
-    
+
     info = vid_getinfo();
     video = info->video;
 
     crt_init(&crt, info->width, info->height, video);
 
-    /* put the name of your image file here */
-    if (!ppm_read24("YOUR_IMAGE.ppm", &img, &imgw, &imgh, calloc)) {
-        printf("unable to read image\n");
+    char *input_file;
+    if (argc == 1) {
+        fprintf(stderr, "Please specify PPM image input file.\n");
+        return EXIT_FAILURE;
+    }
+    input_file = argv[1];
+    if (!ppm_read24(input_file, &img, &imgw, &imgh, calloc)) {
+        fprintf(stderr, "unable to read image\n");
         return EXIT_FAILURE;
     }
     printf("loaded %d %d\n", imgw, imgh);
 
     sys_start();
-    
+
     sys_shutdown();
     return EXIT_SUCCESS;
 }
