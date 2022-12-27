@@ -375,7 +375,7 @@ displaycb(void)
     
     crt_draw(&crt, noise);
 
-    vid_swapbuffers();
+    vid_blit();
     vid_sync();
 }
 
