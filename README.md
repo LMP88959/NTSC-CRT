@@ -26,15 +26,15 @@ to emulate NTSC output.
 ================================================================
 Feature List:
 
-- Somewhat realistic/accurate composite NTSC image output  
-  -- with bandlimited luma/chroma  
-  -- color artifacts (extends to being able to show specially patterned b/w images as color)  
+- Somewhat realistic/accurate composite NTSC image output
+  -- with bandlimited luma/chroma
+  -- color artifacts (extends to being able to show specially patterned b/w images as color)
 - VSYNC and HSYNC
 - Signal noise (optional)
 - Interlaced and progressive scan
 - Monochrome and full color
 - Vertically aligned chroma OR checkerboard chroma (specified in #define in header)
- 
+
 ## Important
 The command line program provided does not let you mess with all the settings
 like black/white point, brightness, saturation, and contrast.
@@ -47,12 +47,22 @@ The famous waterfall 'rainbow' effect created as a result of dithering will show
 Specially patterned black and white images can be encoded/decoded with color just like a real composite NTSC display.
 
 ## Compiling
-```
-  cd NTSC-CRT
-  
-  cc -O3 -o ntsc *.c
 
+```sh
+cd NTSC-CRT
+
+cc -O3 -o ntsc *.c
 ```
+
+or using CMake on Linux, macOS, or Windows:
+
+```sh
+cmake -B build
+cmake --build build
+build/ntsc
+```
+
+The default command line takes a single PPM image file and outputs a processed PPM file:
 
 ```
 usage: ./ntsc -m|o|f|p|r|h outwidth outheight noise phase_offset infile outfile
@@ -70,6 +80,15 @@ sample usage: ./ntsc - 832 624 0 2 in.ppm out.ppm
 
 by default, the image will be full color, interlaced, and scaled to the output dimensions
 ```
+
+There is also the option of "live" rendering to a video window from an input PPM image file:
+
+```sh
+cmake -B build -Dlive=on
+cmake --build build
+build/ntsc my.ppm
+```
+
 If you have any questions feel free to leave a comment on YouTube OR
 join the King's Crook Discord server :)
 
