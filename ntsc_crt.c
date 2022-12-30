@@ -253,6 +253,8 @@ static int noise = 24;
 static int field = 0;
 static int progressive = 0;
 static int raw = 0;
+static int phase_offset = 0;
+static int unlocked_phase = 0; /* color phase changes every field */
 
 static void
 updatecb(void)
@@ -332,7 +334,17 @@ updatecb(void)
         raw ^= 1;
         printf("raw: %d\n", raw);
     }
-
+    if (pkb_key_pressed('p')) {
+        phase_offset++;
+        phase_offset &= 3;
+    }
+    if (pkb_key_pressed('o')) {
+        unlocked_phase ^= 1;
+    }
+    if (unlocked_phase) {
+        phase_offset++;
+        phase_offset &= 3;
+    }
     if (!progressive) {
         field ^= 1;
     }
@@ -359,6 +371,7 @@ static void
 displaycb(void)
 {
     static struct NTSC_SETTINGS ntsc;
+    int phase_ref[4] = { 0, 1, 0, -1 };
 
     fade_phosphors();
 
@@ -368,10 +381,10 @@ displaycb(void)
     ntsc.as_color = color;
     ntsc.field = field & 1;
     ntsc.raw = raw;
-    ntsc.cc[0] = 0;
-    ntsc.cc[1] = 1;
-    ntsc.cc[2] = 0;
-    ntsc.cc[3] = -1;
+    ntsc.cc[0] = phase_ref[(phase_offset + 0) & 3];
+    ntsc.cc[1] = phase_ref[(phase_offset + 1) & 3];
+    ntsc.cc[2] = phase_ref[(phase_offset + 2) & 3];
+    ntsc.cc[3] = phase_ref[(phase_offset + 3) & 3];
 
     crt_2ntsc(&crt, &ntsc);
 
