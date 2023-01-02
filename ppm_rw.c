@@ -1,9 +1,9 @@
 /*****************************************************************************/
 /*
  * NTSC/CRT - integer-only NTSC video signal encoding / decoding emulation
- * 
+ *
  *   by EMMIR 2018-2023
- *   
+ *
  *   YouTube: https://www.youtube.com/@EMMIR_KC/videos
  *   Discord: https://discord.com/invite/hdYctSmyQJ
  */
@@ -16,7 +16,7 @@
 extern int
 ppm_read24(char *file,
            int **out_color, int *out_w, int *out_h,
-           void *(*calloc_func)(int, int))
+           void *(*calloc_func)(size_t, size_t))
  {
     FILE *f;
     long beg;
