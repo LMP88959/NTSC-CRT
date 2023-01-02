@@ -60,7 +60,10 @@ endif()
 # --- NTSC program
 add_executable(ntsc crt.c ntsc_crt.c ppm_rw.c)
 target_include_directories(ntsc PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_compile_definitions(ntsc PRIVATE CMD_LINE_VERSION=$<NOT:$<BOOL:${live}>>)
+target_compile_definitions(ntsc PRIVATE
+CMD_LINE_VERSION=$<NOT:$<BOOL:${live}>>
+$<$<BOOL:${MSVC}>:_CRT_SECURE_NO_WARNINGS>
+)
 target_link_libraries(ntsc PRIVATE
 $<$<BOOL:${live}>:fw::fw>
 $<$<BOOL:${WIN32}>:winmm>
