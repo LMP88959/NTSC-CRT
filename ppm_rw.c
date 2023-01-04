@@ -25,6 +25,7 @@ ppm_read24(char *file,
     int r, g, b;
     int header = 0;
     char buf[64];
+    int maxc = 0xff;
 
     f = fopen(file, "rb");
     if (f == NULL) {
@@ -53,7 +54,8 @@ ppm_read24(char *file,
                 }
                 break;
             case 2:
-                if (atoi(buf) > 0xff) {
+                maxc = atoi(buf);
+                if (maxc > 0xff) {
                     printf("[ppm_rw] invalid ppm [>255]: %s\n", file);
                     goto err;
                 }
@@ -63,6 +65,8 @@ ppm_read24(char *file,
         }
         header++;
     }
+           
+    maxc++;
     beg = ftell(f);
     npix = *out_w * *out_h;
     *out_color = calloc_func(npix, sizeof(int));
@@ -73,9 +77,9 @@ ppm_read24(char *file,
     out = *out_color;
     /*printf("ppm 24-bit w: %d, h: %d, s: %d\n", *out_w, *out_h, npix);*/
     for (i = 0; i < npix; i++) {
-        r = fgetc(f) & 0xff;
-        g = fgetc(f) & 0xff;
-        b = fgetc(f) & 0xff;
+        r = ((fgetc(f) & 0xff) << 8) / maxc;
+        g = ((fgetc(f) & 0xff) << 8) / maxc;
+        b = ((fgetc(f) & 0xff) << 8) / maxc;
         if (feof(f)) {
             printf("[ppm_rw] early eof: %s\n", file);
             goto err;
