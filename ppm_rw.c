@@ -8,10 +8,11 @@
  *   Discord: https://discord.com/invite/hdYctSmyQJ
  */
 /*****************************************************************************/
-#include "ppm_rw.h"
 
 #include <stdlib.h>
 #include <stdio.h>
+
+#include "ppm_rw.h"
 
 extern int
 ppm_read24(char *file,
