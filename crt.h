@@ -25,6 +25,7 @@ extern "C" {
  */
 
 #define CRT_NES_MODE 0
+#define CRT_NES_HIRES 1
 
 /* do bloom emulation (side effect: makes screen have black borders) */
 #define CRT_DO_BLOOM    0
@@ -51,7 +52,11 @@ extern "C" {
 #endif
 
 #if CRT_NES_MODE
+#if CRT_NES_HIRES
+#define CRT_CB_FREQ     6 /* carrier frequency relative to sample rate */
+#else
 #define CRT_CB_FREQ     3 /* carrier frequency relative to sample rate */
+#endif
 #else
 #define CRT_CB_FREQ     4 /* carrier frequency relative to sample rate */
 #endif
