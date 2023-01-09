@@ -92,6 +92,9 @@ cmake --build build
 build/ntsc my.ppm
 ```
 
+Web version by @binji (might not be up to date):
+https://binji.github.io/NTSC-CRT/
+
 If you have any questions feel free to leave a comment on YouTube OR
 join the King's Crook Discord server :)
 
