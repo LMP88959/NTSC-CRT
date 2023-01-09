@@ -650,7 +650,7 @@ crt_nes2ntsc(struct CRT *v, struct NES_NTSC_SETTINGS *s)
     phase = 0;
 
     for (y = lo; y < desth; y++) {
-        int sy = ((desth-y-1) * s->h) / desth;
+        int sy = (y * s->h) / desth;
         if (sy >= s->h) sy = s->h;
         
         sy *= s->w;
