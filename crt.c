@@ -588,13 +588,28 @@ crt_nes2ntsc(struct CRT *v, struct NES_NTSC_SETTINGS *s)
         
     /* align signal */
     xo = (xo & ~3);
-
+#if CRT_NES_HIRES
+    switch (s->dot_crawl_offset % 3) {
+        case 0:
+            lo = 1;
+            po = 3;
+            break;
+        case 1:
+            lo = 3;
+            po = 1;
+            break;
+        case 2:
+            lo = 2;
+            po = 0;
+            break;
+    }
+#else
     lo = (s->dot_crawl_offset % 3); /* line offset to match color burst */
     po = lo; /* phase offset for color burst */
     if (lo == 1) {
         lo = 3;
     }
-
+#endif
     for (n = 0; n < CRT_VRES; n++) {
         int t; /* time */
         signed char *line = &v->analog[n * CRT_HRES];
@@ -635,7 +650,7 @@ crt_nes2ntsc(struct CRT *v, struct NES_NTSC_SETTINGS *s)
     phase = 0;
 
     for (y = lo; y < desth; y++) {
-        int sy = (y * s->h) / desth;
+        int sy = ((desth-y-1) * s->h) / desth;
         if (sy >= s->h) sy = s->h;
         
         sy *= s->w;
@@ -713,9 +728,15 @@ crt_draw(struct CRT *v, int noise)
             /* increase the multiplier to make the vsync
              * more stable when there is a lot of noise
              */
+#if CRT_NES_HIRES
+            if (s <= (150 * SYNC_LEVEL)) {
+                goto vsync_found;
+            }
+#else
             if (s <= (100 * SYNC_LEVEL)) {
                 goto vsync_found;
             }
+#endif
         }
     }
 vsync_found:
