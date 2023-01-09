@@ -371,10 +371,24 @@ static void
 displaycb(void)
 {
     static struct NTSC_SETTINGS ntsc;
+    static struct NES_NTSC_SETTINGS nes;
+    static int fno = 0;
     int phase_ref[4] = { 0, 1, 0, -1 };
 
     fade_phosphors();
 
+#if CRT_NES_MODE
+    nes.data = ppu_output_256x240;
+    nes.w = 256;
+    nes.h = 240;
+    nes.dot_crawl_offset = fno++ % 3;
+    nes.as_color = cmod;
+    nes.cc[0] = phase_ref[(phase_offset + 0) & 3];
+    nes.cc[1] = phase_ref[(phase_offset + 1) & 3];
+    nes.cc[2] = phase_ref[(phase_offset + 2) & 3];
+    nes.cc[3] = phase_ref[(phase_offset + 3) & 3];
+    crt_nes2ntsc(&crt, &nes);
+#else
     ntsc.rgb = img;
     ntsc.w = imgw;
     ntsc.h = imgh;
@@ -385,9 +399,9 @@ displaycb(void)
     ntsc.cc[1] = phase_ref[(phase_offset + 1) & 3];
     ntsc.cc[2] = phase_ref[(phase_offset + 2) & 3];
     ntsc.cc[3] = phase_ref[(phase_offset + 3) & 3];
-
     crt_2ntsc(&crt, &ntsc);
-
+#endif
+    
     crt_draw(&crt, noise);
 
     vid_blit();
