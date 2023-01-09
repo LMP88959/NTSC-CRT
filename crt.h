@@ -33,7 +33,7 @@ extern "C" {
 /* 0 = vertical  chroma (228 chroma clocks per line) */
 /* 1 = checkered chroma (227.5 chroma clocks per line) */
 /* 2 = sawtooth  chroma (227.3 chroma clocks per line) */
-#define CRT_CHROMA_PATTERN 2
+#define CRT_CHROMA_PATTERN 1
 
 #if CRT_NES_MODE
 #undef CRT_CHROMA_PATTERN
