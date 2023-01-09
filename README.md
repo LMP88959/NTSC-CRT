@@ -35,7 +35,8 @@ Feature List:
 - Signal noise (optional)
 - Interlaced and progressive scan
 - Monochrome and full color
-- Vertically aligned chroma OR checkerboard chroma (specified in #define in header)
+- Vertically aligned chroma OR checkerboard chroma OR sawtoothed chroma (specified in #define in header)
+- NES decoding support
 
 ## Important
 The command line program provided does not let you mess with all the settings
