@@ -332,6 +332,15 @@ updatecb(void)
         }
         printf("%d\n", hue);
     }
+    if (pkb_key_held('7')) {
+        crt.hue -= 1;
+        printf("%d\n", crt.hue);
+    }
+    if (pkb_key_held('8')) {
+        crt.hue += 1;
+        printf("%d\n", crt.hue);
+    }
+  
     if (pkb_key_pressed(FW_KEY_SPACE)) {
         color ^= 1;
     }
