@@ -105,7 +105,13 @@ struct NTSC_SETTINGS {
      * ex: { 0, 1, 0, -1 }
      * ex: { 1, 0, -1, 0 }
      */
-    int cc[4];      
+    int cc[4];
+    /* scale value for values in cc
+     * for example, if using { 0, 1, 0, -1 }, ccs should be 1.
+     * however, if using { 0, 16, 0, -16 }, ccs should be 16.
+     * For best results, don't scale the cc values more than 16.
+     */
+    int ccs;
 };
 
 /* Convert RGB image to analog NTSC signal
@@ -125,6 +131,12 @@ struct NES_NTSC_SETTINGS {
      * ex: { 1, 0, -1, 0 }
      */
     int cc[4];      
+    /* scale value for values in cc
+     * for example, if using { 0, 1, 0, -1 }, ccs should be 1.
+     * however, if using { 0, 16, 0, -16 }, ccs should be 16.
+     * For best results, don't scale the cc values more than 16.
+     */
+    int ccs;
 };
 
 /* Convert NES pixel data (generally 256x240) to analog NTSC signal
@@ -136,6 +148,9 @@ extern void crt_nes2ntsc(struct CRT *v, struct NES_NTSC_SETTINGS *s);
  *   noise - the amount of noise added to the signal (0 - inf)
  */
 extern void crt_draw(struct CRT *v, int noise);
+
+/* Exposed utility function */
+extern void crt_sincos14(int *s, int *c, int n);
 
 #ifdef __cplusplus
 }
