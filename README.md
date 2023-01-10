@@ -8,6 +8,8 @@ NTSC video signal encoding / decoding emulation by EMMIR 2018-2023
 [![alt text](/kc.png?raw=true)](https://www.youtube.com/watch?v=ucfPRtV6--c)
 ### Example of artifact colors being used purposely by specially designed art (not my own)
 ![alt text](/artifactcolor.png?raw=true)
+### Example of artifact colors creating a rainbow by specially designed art (not my own)
+![alt text](/rainbow.png?raw=true)
 
 ### NES mode  
 YouTube video of the filter running in an NES emulator:
