@@ -9,6 +9,9 @@ NTSC video signal encoding / decoding emulation by EMMIR 2018-2023
 ### Example of artifact colors being used purposely by specially designed art (not my own)
 ![alt text](/artifactcolor.png?raw=true)
 
+YouTube video of the filter running in an NES emulator:
+https://www.youtube.com/watch?v=giML77yy7To
+
 The result of going down a very deep rabbit hole.
 I learned a lot about analog signal processing, television, and the NTSC standard in the process.
 Written to be compatible with C89.
