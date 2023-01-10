@@ -106,8 +106,8 @@ sintabil8(int n)
 }
 
 /* 14-bit interpolated sine/cosine */
-static void
-sincos14(int *s, int *c, int n)
+extern void
+crt_sincos14(int *s, int *c, int n)
 {
     int h;
     
@@ -224,13 +224,13 @@ init_eq(struct EQF *f,
     f->g[1] = g_mid;
     f->g[2] = g_hi;
     
-    sincos14(&sn, &cs, T14_PI * f_lo / rate);
+    crt_sincos14(&sn, &cs, T14_PI * f_lo / rate);
     if (EQ_P >= 15) {
         f->lf = 2 * (sn << (EQ_P - 15));
     } else {
         f->lf = 2 * (sn >> (15 - EQ_P));
     }
-    sincos14(&sn, &cs, T14_PI * f_hi / rate);
+    crt_sincos14(&sn, &cs, T14_PI * f_hi / rate);
     if (EQ_P >= 15) {
         f->hf = 2 * (sn << (EQ_P - 15));
     } else {
@@ -435,9 +435,11 @@ crt_2ntsc(struct CRT *v, struct NTSC_SETTINGS *s)
                 while (t < CRT_HRES) line[t++] = BLANK_LEVEL;
             }
             if (s->as_color) {
+                int cb;
                 /* CB_CYCLES of color burst at 3.579545 Mhz */
                 for (t = CB_BEG; t < CB_BEG + (CB_CYCLES * CRT_CB_FREQ); t++) {
-                    line[t] = BLANK_LEVEL + (s->cc[(t + 0) & 3] * BURST_LEVEL);
+                    cb = s->cc[(t + 0) & 3];
+                    line[t] = BLANK_LEVEL + (cb * BURST_LEVEL) / s->ccs;
                 }
             }
         }
@@ -639,9 +641,11 @@ crt_nes2ntsc(struct CRT *v, struct NES_NTSC_SETTINGS *s)
                 while (t < CRT_HRES) line[t++] = BLANK_LEVEL;
             }
             if (s->as_color) {
+                int cb;
                 /* CB_CYCLES of color burst at 3.579545 Mhz */
                 for (t = CB_BEG; t < CB_BEG + (CB_CYCLES * CRT_CB_FREQ); t++) {
-                    line[t] = BLANK_LEVEL + (s->cc[(t + po) & 3] * BURST_LEVEL);
+                    cb = s->cc[(t + po) & 3];
+                    line[t] = BLANK_LEVEL + (cb * BURST_LEVEL) / s->ccs;
                 }
             }
         }
