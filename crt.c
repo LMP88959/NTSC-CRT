@@ -495,8 +495,8 @@ crt_2ntsc(struct CRT *v, struct NTSC_SETTINGS *s)
             ire = BLACK_LEVEL + v->black_point;
             /* bandlimit Y,I,Q */
             fy = iirf(&iirY, fy);
-            fi = iirf(&iirI, fi) * ph * s->cc[(x + 0) & 3];
-            fq = iirf(&iirQ, fq) * ph * s->cc[(x + 3) & 3];
+            fi = iirf(&iirI, fi) * ph * s->cc[(x + 0) & 3] / s->ccs;
+            fq = iirf(&iirQ, fq) * ph * s->cc[(x + 3) & 3] / s->ccs;
             ire += (fy + fi + fq) * (WHITE_LEVEL * v->white_point / 100) >> 10;
             if (ire < 0)   ire = 0;
             if (ire > 110) ire = 110;
