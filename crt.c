@@ -699,7 +699,12 @@ crt_draw(struct CRT *v, int noise)
     int s = 0;
     int field, ratio;
     int ccref[4]; /* color carrier signal */
-   
+    int huesn, huecs;
+    
+    crt_sincos14(&huesn, &huecs, ((v->hue % 360) + 90) * 8192 / 180);
+    huesn >>= 11; /* make 4-bit */
+    huecs >>= 11;
+
     memset(ccref, 0, sizeof(ccref));
     
     for (i = 0; i < CRT_INPUT_SIZE; i++) {
@@ -815,11 +820,12 @@ vsync_found:
         dci = ccref[(phasealign + 1) & 3] - ccref[(phasealign + 3) & 3];
         dcq = ccref[(phasealign + 2) & 3] - ccref[(phasealign + 0) & 3];
 
-        wave[0] = -dcq * v->saturation;
-        wave[1] =  dci * v->saturation;
-        wave[2] =  dcq * v->saturation;
-        wave[3] = -dci * v->saturation;
-
+        /* rotate them by the hue adjustment angle */
+        wave[0] = ((dci * huecs - dcq * huesn) >> 4) * v->saturation;
+        wave[1] = ((dcq * huecs + dci * huesn) >> 4) * v->saturation;
+        wave[2] = -wave[0];
+        wave[3] = -wave[1];
+        
         sig = v->inp + pos;
 #if CRT_DO_BLOOM
         s = 0;
