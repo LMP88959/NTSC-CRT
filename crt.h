@@ -51,6 +51,7 @@ extern "C" {
 #define CRT_CC_LINE 2280
 #endif
 
+/* NOTE, in general, increasing CRT_CB_FREQ reduces blur and bleed */
 #if CRT_NES_MODE
 #if CRT_NES_HIRES
 #define CRT_CB_FREQ     6 /* carrier frequency relative to sample rate */
