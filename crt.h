@@ -119,6 +119,15 @@ struct NTSC_SETTINGS {
  *   s - struct containing settings to apply to this field
  */
 extern void crt_2ntsc(struct CRT *v, struct NTSC_SETTINGS *s);
+    
+/* Convert RGB image to analog NTSC signal and stretch it to fill
+ * the entire active video portion of the NTSC signal.
+ * Does not perform the slight horizontal blending which gets done in crt_2ntsc.
+ * Good for seeing test patterns.
+ *   s - struct containing settings to apply to this field
+ *       NOTE: raw is ignored in this 'FS' (fill screen) version of the 2ntsc function
+ */
+extern void crt_2ntscFS(struct CRT *v, struct NTSC_SETTINGS *s);
 
 struct NES_NTSC_SETTINGS {
     const unsigned short *data; /* 6 or 9-bit NES 'pixels' */
