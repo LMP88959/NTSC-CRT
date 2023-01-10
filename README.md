@@ -53,7 +53,7 @@ In the ntsc_crt.c file, there are two main()'s.
 One is for a command line program and the other uses my FW library (found here https://github.com/LMP88959/PL3D-KC)
 to provide real-time NTSC emulation with adjustable parameters.
 
-The famous waterfall 'rainbow' effect created as a result of dithering will show if it is compiled with `CRT_DO_CHK_C` set to 0.
+The famous waterfall 'rainbow' effect created as a result of dithering will show if it is compiled with `CRT_CHROMA_PATTERN` set to 0.
 Specially patterned black and white images can be encoded/decoded with color just like a real composite NTSC display.
 
 ## Compiling
