@@ -209,6 +209,7 @@ main(int argc, char **argv)
     ntsc.cc[1] = phase_ref[(phase_offset + 1) & 3];
     ntsc.cc[2] = phase_ref[(phase_offset + 2) & 3];
     ntsc.cc[3] = phase_ref[(phase_offset + 3) & 3];
+    ntsc.ccs = 1;
 
     printf("converting to %dx%d...\n", outw, outh);
     err = 0;
@@ -255,6 +256,7 @@ static int progressive = 0;
 static int raw = 0;
 static int phase_offset = 0;
 static int unlocked_phase = 0; /* color phase changes every field */
+static int hue = 0;
 
 static void
 updatecb(void)
@@ -316,6 +318,20 @@ updatecb(void)
         noise += 1;
         printf("%d\n", noise);
     }
+    if (pkb_key_held('5')) {
+        hue--;
+        if (hue < 0) {
+            hue = 359;
+        }
+        printf("%d\n", hue);
+    }
+    if (pkb_key_held('6')) {
+        hue++;
+        if (hue > 359) {
+            hue = 0;
+        }
+        printf("%d\n", hue);
+    }
     if (pkb_key_pressed(FW_KEY_SPACE)) {
         color ^= 1;
     }
@@ -374,7 +390,14 @@ displaycb(void)
     static struct NES_NTSC_SETTINGS nes;
     static int fno = 0;
     int phase_ref[4] = { 0, 1, 0, -1 };
-
+    int sn, cs;
+    int i;
+    
+    for (i = 0; i < 4; i++) {
+        crt_sincos14(&sn, &cs, (hue + i * 90) * 8192 / 180);
+        phase_ref[i] = sn >> 11;
+    }
+    
     fade_phosphors();
 
 #if CRT_NES_MODE
@@ -387,6 +410,7 @@ displaycb(void)
     nes.cc[1] = phase_ref[(phase_offset + 1) & 3];
     nes.cc[2] = phase_ref[(phase_offset + 2) & 3];
     nes.cc[3] = phase_ref[(phase_offset + 3) & 3];
+    nes.ccs = 16;
     crt_nes2ntsc(&crt, &nes);
 #else
     ntsc.rgb = img;
@@ -399,6 +423,7 @@ displaycb(void)
     ntsc.cc[1] = phase_ref[(phase_offset + 1) & 3];
     ntsc.cc[2] = phase_ref[(phase_offset + 2) & 3];
     ntsc.cc[3] = phase_ref[(phase_offset + 3) & 3];
+    ntsc.ccs = 16;
     crt_2ntsc(&crt, &ntsc);
 #endif
     
