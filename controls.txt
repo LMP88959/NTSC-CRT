@@ -1,0 +1,29 @@
+Controls for the interactive app in ntsc_crt.c
+
+ESC - shutdown
+
+q - increase black point
+a - decrease black point
+w - increase white point
+s - decrease white point
+r - reset CRT settings (hue, brightness, saturation, contrast, black point, white point)
+f - toggle between even and odd fields
+e - toggle between progressive and interlaced mode
+t - toggle raw display mode
+p - cycle through 90 degree phase offsets (for color artifacting)
+o - unlocked phase cycling (like pressing p every frame)
+
+
+up arrow - increase brightness
+down arrow - decrease brightness
+right arrow - increase contrast
+left arrow - decrease contrast
+
+1 - decrease saturation
+2 - increase saturation
+3 - decrease noise (minimum 0)
+4 - increase noise
+5 - decrease color artifacting hue (mod 360)
+6 - increase color artifacting hue (mod 360)
+7 - decrease decoding hue (mod 360)
+8 - increase decoding hue (mod 360)
