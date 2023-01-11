@@ -356,6 +356,12 @@ updatecb(void)
         printf("progressive: %d\n", progressive);
     }
     if (pkb_key_pressed('t')) {
+        /* Analog array must be cleared since it normally doesn't get zeroed each frame
+         * so active video portions that were written to in non-raw mode will not lose
+         * their values resulting in the previous image being
+         * displayed where the new, smaller image is not
+         */
+        memset(crt.analog, 0, sizeof(crt.analog));
         raw ^= 1;
         printf("raw: %d\n", raw);
     }
@@ -408,7 +414,8 @@ displaycb(void)
     }
     
     fade_phosphors();
-
+    /* not necessary to clear if you're rendering on a constant region of the display */
+    /* memset(crt.analog, 0, sizeof(crt.analog)); */
 #if CRT_NES_MODE
     nes.data = ppu_output_256x240;
     nes.w = 256;
