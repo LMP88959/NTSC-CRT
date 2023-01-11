@@ -329,6 +329,7 @@ crt_resize(struct CRT *v, int w, int h, int *out)
 extern void
 crt_reset(struct CRT *v)
 {
+    v->hue = 0;
     v->saturation = 18;
     v->brightness = 0;
     v->contrast = 179;
