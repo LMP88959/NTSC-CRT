@@ -66,7 +66,7 @@ usage(char *p)
     printf(DRV_HEADER);
     printf("usage: %s -m|o|f|p|r|h outwidth outheight noise phase_offset infile outfile\n", p);
     printf("sample usage: %s -op 640 480 24 3 in.ppm out.ppm\n", p);
-    printf("sample usage: %s - 832 624 0 2 in.ppm out.ppm\n", p);
+    printf("sample usage: %s - 832 624 0 2 in.bmp out.bmp\n", p);
     printf("-- NOTE: the - after the program name is required\n");
     printf("\tphase_offset is [0, 1, 2, or 3] +1 means a color phase change of 90 degrees\n");
     printf("------------------------------------------------------------\n");
