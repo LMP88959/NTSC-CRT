@@ -72,12 +72,12 @@ cmake --build build
 build/ntsc
 ```
 
-The default command line takes a single PPM image file and outputs a processed PPM file:
+The default command line takes a single PPM or BMP image file and outputs a processed PPM or BMP file:
 
 ```
 usage: ./ntsc -m|o|f|p|r|h outwidth outheight noise phase_offset infile outfile
 sample usage: ./ntsc -op 640 480 24 3 in.ppm out.ppm
-sample usage: ./ntsc - 832 624 0 2 in.ppm out.ppm
+sample usage: ./ntsc - 832 624 0 2 in.bmp out.bmp
 -- NOTE: the - after the program name is required
 	phase_offset is [0, 1, 2, or 3] +1 means a color phase change of 90 degrees
 ------------------------------------------------------------
