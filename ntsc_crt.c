@@ -15,6 +15,13 @@
 #include <string.h>
 #include <errno.h>
 #include "ppm_rw.h"
+#include "bmp_rw.h"
+
+static int
+cmpsuf(char *s, char *suf, int nc)
+{
+    return strcmp(s + strlen(s) - nc, suf);
+}
 
 #ifndef CMD_LINE_VERSION
 #define CMD_LINE_VERSION 1
@@ -59,7 +66,7 @@ usage(char *p)
     printf(DRV_HEADER);
     printf("usage: %s -m|o|f|p|r|h outwidth outheight noise phase_offset infile outfile\n", p);
     printf("sample usage: %s -op 640 480 24 3 in.ppm out.ppm\n", p);
-    printf("sample usage: %s - 832 624 0 2 in.ppm out.ppm\n", p);
+    printf("sample usage: %s - 832 624 0 2 in.bmp out.bmp\n", p);
     printf("-- NOTE: the - after the program name is required\n");
     printf("\tphase_offset is [0, 1, 2, or 3] +1 means a color phase change of 90 degrees\n");
     printf("------------------------------------------------------------\n");
@@ -187,9 +194,16 @@ main(int argc, char **argv)
     input_file = argv[6];
     output_file = argv[7];
 
-    if (!ppm_read24(input_file, &img, &imgw, &imgh, calloc)) {
-        printf("unable to read image\n");
-        return EXIT_FAILURE;
+    if (cmpsuf(input_file, ".ppm", 4) == 0) {
+        if (!ppm_read24(input_file, &img, &imgw, &imgh, calloc)) {
+            printf("unable to read image\n");
+            return EXIT_FAILURE;
+        }
+    } else {
+        if (!bmp_read24(input_file, &img, &imgw, &imgh, calloc)) {
+            printf("unable to read image\n");
+            return EXIT_FAILURE;
+        }
     }
     printf("loaded %d %d\n", imgw, imgh);
 
@@ -224,9 +238,17 @@ main(int argc, char **argv)
         }
         err++;
     }
-    if (!ppm_write24(output_file, output, outw, outh)) {
-        printf("unable to write image\n");
-        return EXIT_FAILURE;
+    
+    if (cmpsuf(output_file, ".ppm", 4) == 0) {
+        if (!ppm_write24(output_file, output, outw, outh)) {
+            printf("unable to write image\n");
+            return EXIT_FAILURE;
+        }
+    } else {
+        if (!bmp_write24(output_file, output, outw, outh)) {
+            printf("unable to write image\n");
+            return EXIT_FAILURE;
+        }
     }
     printf("done\n");
     return EXIT_SUCCESS;
@@ -478,14 +500,23 @@ main(int argc, char **argv)
 
     char *input_file;
     if (argc == 1) {
-        fprintf(stderr, "Please specify PPM image input file.\n");
+        fprintf(stderr, "Please specify PPM or BMP image input file.\n");
         return EXIT_FAILURE;
     }
     input_file = argv[1];
-    if (!ppm_read24(input_file, &img, &imgw, &imgh, calloc)) {
-        fprintf(stderr, "unable to read image\n");
-        return EXIT_FAILURE;
+    
+    if (cmpsuf(input_file, ".ppm", 4) == 0) {
+        if (!ppm_read24(input_file, &img, &imgw, &imgh, calloc)) {
+            fprintf(stderr, "unable to read image\n");
+            return EXIT_FAILURE;
+        }
+    } else {
+        if (!bmp_read24(input_file, &img, &imgw, &imgh, calloc)) {
+            fprintf(stderr, "unable to read image\n");
+            return EXIT_FAILURE;
+        }
     }
+
     printf("loaded %d %d\n", imgw, imgh);
 
     sys_start();
