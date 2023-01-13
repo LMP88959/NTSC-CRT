@@ -13,7 +13,7 @@
 
 /* bmp_rw.h
  *
- * Routines to read and write BMP images. Kindly provided by 'deqmega'
+ * Routines to read and write BMP images. Kindly provided by 'deqmega' https://github.com/DEQ2000-cyber
  *
  */
 
