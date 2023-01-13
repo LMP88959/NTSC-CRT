@@ -441,6 +441,7 @@ crt_2ntsc(struct CRT *v, struct NTSC_SETTINGS *s)
                 for (t = CB_BEG; t < CB_BEG + (CB_CYCLES * CRT_CB_FREQ); t++) {
                     cb = s->cc[(t + 0) & 3];
                     line[t] = BLANK_LEVEL + (cb * BURST_LEVEL) / s->ccs;
+                    v->ccf[t & 3] = line[t];
                 }
             }
         }
@@ -562,6 +563,7 @@ crt_2ntscFS(struct CRT *v, struct NTSC_SETTINGS *s)
                 for (t = CB_BEG; t < CB_BEG + (CB_CYCLES * CRT_CB_FREQ); t++) {
                     cb = s->cc[(t + 0) & 3];
                     line[t] = BLANK_LEVEL + (cb * BURST_LEVEL) / s->ccs;
+                    v->ccf[t & 3] = line[t];
                 }
             }
         }
@@ -754,6 +756,7 @@ crt_nes2ntsc(struct CRT *v, struct NES_NTSC_SETTINGS *s)
                 for (t = CB_BEG; t < CB_BEG + (CB_CYCLES * CRT_CB_FREQ); t++) {
                     cb = s->cc[(t + po) & 3];
                     line[t] = BLANK_LEVEL + (cb * BURST_LEVEL) / s->ccs;
+                    v->ccf[t & 3] = line[t];
                 }
             }
         }
@@ -813,8 +816,10 @@ crt_draw(struct CRT *v, int noise)
     huesn >>= 11; /* make 4-bit */
     huecs >>= 11;
 
-    memset(ccref, 0, sizeof(ccref));
-    
+    for (i = 0; i < 4; i++) {
+        ccref[i] = v->ccf[i] << 7;
+    }
+
     for (i = 0; i < CRT_INPUT_SIZE; i++) {
         static int rn = 194; /* 'random' noise */
 
