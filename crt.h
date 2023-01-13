@@ -25,7 +25,7 @@ extern "C" {
  */
 
 #define CRT_NES_MODE 0
-#define CRT_NES_HIRES 1
+#define CRT_NES_HIRES 0
 
 /* do bloom emulation (side effect: makes screen have black borders) */
 #define CRT_DO_BLOOM    0
