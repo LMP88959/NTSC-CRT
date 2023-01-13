@@ -72,6 +72,7 @@ extern "C" {
 struct CRT {
     signed char analog[CRT_INPUT_SIZE];
     signed char inp[CRT_INPUT_SIZE]; /* CRT input, can be noisy */
+    int ccf[4]; /* color carrier reference for faster convergence */
     int hsync, vsync; /* used internally to keep track of sync over frames */
     int hue, brightness, contrast, saturation; /* common monitor settings */
     int black_point, white_point; /* user-adjustable */
