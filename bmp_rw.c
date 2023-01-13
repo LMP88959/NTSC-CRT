@@ -16,7 +16,7 @@
 #include "bmp_rw.h"
 
 /*
- * BMP image reader/writer kindly provided by 'deqmega'
+ * BMP image reader/writer kindly provided by 'deqmega' https://github.com/DEQ2000-cyber
  */
 
 static unsigned char *
