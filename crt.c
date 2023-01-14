@@ -9,7 +9,7 @@
  */
 /*****************************************************************************/
 #include "crt.h"
-
+#include "crt_sincos.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -74,58 +74,6 @@
 
 /* ensure negative values for x get properly modulo'd */
 #define POSMOD(x, n)     (((x) % (n) + (n)) % (n))
-
-/*****************************************************************************/
-/***************************** FIXED POINT MATH ******************************/
-/*****************************************************************************/
-
-#define T14_2PI           16384
-#define T14_MASK          (T14_2PI - 1)
-#define T14_PI            (T14_2PI / 2)
-
-static int sigpsin15[18] = { /* significant points on sine wave (15-bit) */
-    0x0000,
-    0x0c88,0x18f8,0x2528,0x30f8,0x3c50,0x4718,0x5130,0x5a80,
-    0x62f0,0x6a68,0x70e0,0x7640,0x7a78,0x7d88,0x7f60,0x8000,
-    0x7f60
-};
-
-static int
-sintabil8(int n)
-{
-    int f, i, a, b;
-    
-    /* looks scary but if you don't change T14_2PI
-     * it won't cause out of bounds memory reads
-     */
-    f = n >> 0 & 0xff;
-    i = n >> 8 & 0xff;
-    a = sigpsin15[i];
-    b = sigpsin15[i + 1];
-    return (a + ((b - a) * f >> 8));
-}
-
-/* 14-bit interpolated sine/cosine */
-extern void
-crt_sincos14(int *s, int *c, int n)
-{
-    int h;
-    
-    n &= T14_MASK;
-    h = n & ((T14_2PI >> 1) - 1);
-    
-    if (h > ((T14_2PI >> 2) - 1)) {
-        *c = -sintabil8(h - (T14_2PI >> 2));
-        *s = sintabil8((T14_2PI >> 1) - h);
-    } else {
-        *c = sintabil8((T14_2PI >> 2) - h);
-        *s = sintabil8(h);
-    }
-    if (n > ((T14_2PI >> 1) - 1)) {
-        *c = -*c;
-        *s = -*s;
-    }
-}
 
 #define EXP_P         11
 #define EXP_ONE       (1 << EXP_P)
@@ -616,180 +564,6 @@ crt_2ntscFS(struct CRT *v, struct NTSC_SETTINGS *s)
     }
 }
 
-/* generate the square wave for a given 9-bit pixel and phase */
-static int
-square_sample(int p, int phase)
-{
-    static int active[6] = {
-        0300, 0100,
-        0500, 0400,
-        0600, 0200
-    };
-    int bri, hue, v;
-
-    hue = (p & 0x0f);
-    
-    /* last two columns are black */
-    if (hue >= 0x0e) {
-        return 0;
-    }
-
-    bri = ((p & 0x30) >> 4) * 300;
-    
-    switch (hue) {
-        case 0:
-            v = bri + 410;
-            break;
-        case 0x0d:
-            v = bri - 300;
-            break;
-        default:
-            v = (((hue + phase) % 12) < 6) ? (bri + 410) : (bri - 300);
-            break;
-    }
-
-    if (v > 1024) {
-        v = 1024;
-    }
-    /* red 0100, green 0200, blue 0400 */
-    if ((p & 0700) & active[(phase >> 1) % 6]) {
-        return (v >> 1) + (v >> 2);
-    }
-
-    return v;
-}
-
-extern void
-crt_nes2ntsc(struct CRT *v, struct NES_NTSC_SETTINGS *s)
-{
-    int x, y, xo, yo;
-    int destw = AV_LEN;
-    int desth = CRT_LINES;
-    int n, phase;
-    int po, lo;
-
-#if CRT_DO_BLOOM
-    if (s->raw) {
-        destw = s->w;
-        desth = s->h;
-        if (destw > ((AV_LEN * 55500) >> 16)) {
-            destw = ((AV_LEN * 55500) >> 16);
-        }
-        if (desth > ((CRT_LINES * 63500) >> 16)) {
-            desth = ((CRT_LINES * 63500) >> 16);
-        }
-    } else {
-        destw = (AV_LEN * 55500) >> 16;
-        desth = (CRT_LINES * 63500) >> 16;
-    }
-#else
-    if (s->raw) {
-        destw = s->w;
-        desth = s->h;
-        if (destw > AV_LEN) {
-            destw = AV_LEN;
-        }
-        if (desth > ((CRT_LINES * 64500) >> 16)) {
-            desth = ((CRT_LINES * 64500) >> 16);
-        }
-    }
-#endif
-
-    xo = AV_BEG  + 4 + (AV_LEN    - destw) / 2;
-    yo = CRT_TOP + 4 + (CRT_LINES - desth) / 2;
-        
-    /* align signal */
-    xo = (xo & ~3);
-#if CRT_NES_HIRES
-    switch (s->dot_crawl_offset % 3) {
-        case 0:
-            lo = 1;
-            po = 3;
-            break;
-        case 1:
-            lo = 3;
-            po = 1;
-            break;
-        case 2:
-            lo = 2;
-            po = 0;
-            break;
-    }
-#else
-    lo = (s->dot_crawl_offset % 3); /* line offset to match color burst */
-    po = lo; /* phase offset for color burst */
-    if (lo == 1) {
-        lo = 3;
-    }
-#endif
-    for (n = 0; n < CRT_VRES; n++) {
-        int t; /* time */
-        signed char *line = &v->analog[n * CRT_HRES];
-        
-        t = LINE_BEG;
-
-        if (n <= 3 || (n >= 7 && n <= 9)) {
-            /* equalizing pulses - small blips of sync, mostly blank */
-            while (t < (4   * CRT_HRES / 100)) line[t++] = SYNC_LEVEL;
-            while (t < (50  * CRT_HRES / 100)) line[t++] = BLANK_LEVEL;
-            while (t < (54  * CRT_HRES / 100)) line[t++] = SYNC_LEVEL;
-            while (t < (100 * CRT_HRES / 100)) line[t++] = BLANK_LEVEL;
-        } else if (n >= 4 && n <= 6) {
-            int even[4] = { 46, 50, 96, 100 };
-            int *offs = even; /* always progressive */
-            /* vertical sync pulse - small blips of blank, mostly sync */
-            while (t < (offs[0] * CRT_HRES / 100)) line[t++] = SYNC_LEVEL;
-            while (t < (offs[1] * CRT_HRES / 100)) line[t++] = BLANK_LEVEL;
-            while (t < (offs[2] * CRT_HRES / 100)) line[t++] = SYNC_LEVEL;
-            while (t < (offs[3] * CRT_HRES / 100)) line[t++] = BLANK_LEVEL;
-        } else {
-            /* video line */
-            while (t < SYNC_BEG) line[t++] = BLANK_LEVEL; /* FP */
-            while (t < BW_BEG)   line[t++] = SYNC_LEVEL;  /* SYNC */
-            while (t < AV_BEG)   line[t++] = BLANK_LEVEL; /* BW + CB + BP */
-            if (n < CRT_TOP) {
-                while (t < CRT_HRES) line[t++] = BLANK_LEVEL;
-            }
-            if (s->as_color) {
-                int cb;
-                /* CB_CYCLES of color burst at 3.579545 Mhz */
-                for (t = CB_BEG; t < CB_BEG + (CB_CYCLES * CRT_CB_FREQ); t++) {
-                    cb = s->cc[(t + po) & 3];
-                    line[t] = BLANK_LEVEL + (cb * BURST_LEVEL) / s->ccs;
-                    v->ccf[t & 3] = line[t];
-                }
-            }
-        }
-    }   
-    
-    phase = 0;
-
-    for (y = lo; y < desth; y++) {
-        int sy = (y * s->h) / desth;
-        if (sy >= s->h) sy = s->h;
-        
-        sy *= s->w;
-        phase += (xo * 3);
-        for (x = 0; x < destw; x++) {
-            int ire, p;
-            
-            p = s->data[((x * s->w) / destw) + sy];
-            ire = BLACK_LEVEL + v->black_point;
-            ire += square_sample(p, phase + 0);
-            ire += square_sample(p, phase + 1);
-            ire += square_sample(p, phase + 2);
-            ire += square_sample(p, phase + 3);
-            ire = (ire * (WHITE_LEVEL * v->white_point / 100)) >> 12;
-            if (ire < 0)   ire = 0;
-            if (ire > 110) ire = 110;
-            v->analog[(x + xo) + (y + yo) * CRT_HRES] = ire;
-            phase += 3;
-        }
-        /* mod here so we don't overflow down the line */
-        phase = (phase + ((CRT_HRES - destw) * 3)) % 12;
-    }
-}
-
 /* search windows, in samples */
 #define HSYNC_WINDOW 8
 #define VSYNC_WINDOW 8
@@ -816,9 +590,10 @@ crt_draw(struct CRT *v, int noise)
     huesn >>= 11; /* make 4-bit */
     huecs >>= 11;
 
-    for (i = 0; i < 4; i++) {
-        ccref[i] = v->ccf[i] << 7;
-    }
+    ccref[0] = v->ccf[0] << 7;
+    ccref[1] = v->ccf[1] << 7;
+    ccref[2] = v->ccf[2] << 7;
+    ccref[3] = v->ccf[3] << 7;
 
     for (i = 0; i < CRT_INPUT_SIZE; i++) {
         static int rn = 194; /* 'random' noise */
@@ -850,15 +625,9 @@ crt_draw(struct CRT *v, int noise)
             /* increase the multiplier to make the vsync
              * more stable when there is a lot of noise
              */
-#if CRT_NES_HIRES
-            if (s <= (150 * SYNC_LEVEL)) {
-                goto vsync_found;
-            }
-#else
             if (s <= (100 * SYNC_LEVEL)) {
                 goto vsync_found;
             }
-#endif
         }
     }
 vsync_found:
