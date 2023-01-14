@@ -70,6 +70,7 @@ struct CRT {
     int black_point, white_point; /* user-adjustable */
     int outw, outh; /* output width/height */
     int *out; /* output image */
+    int rn; /* 'random' noise */
 };
 
 /* Initializes the library. Sets up filters.
