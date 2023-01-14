@@ -11,8 +11,8 @@
  */
 /*****************************************************************************/
 
-#include "crt.h"
-
+#include "crt_nes.h"
+#include "crt_sincos.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -69,11 +69,8 @@
 /* somewhere between 7 and 12 cycles */
 #define CB_CYCLES   10
 
-/* frequencies for bandlimiting */
+/* line frequency */
 #define L_FREQ           1431818 /* full line */
-#define Y_FREQ           420000  /* Luma   (Y) 4.2  MHz of the 14.31818 MHz */
-#define I_FREQ           150000  /* Chroma (I) 1.5  MHz of the 14.31818 MHz */
-#define Q_FREQ           55000   /* Chroma (Q) 0.55 MHz of the 14.31818 MHz */
 
 /* IRE units (100 = 1.0V, -40 = 0.0V) */
 /* https://www.nesdev.org/wiki/NTSC_video#Terminated_measurement */
@@ -92,118 +89,6 @@
 
 /* ensure negative values for x get properly modulo'd */
 #define POSMOD(x, n)     (((x) % (n) + (n)) % (n))
-
-/*****************************************************************************/
-/***************************** FIXED POINT MATH ******************************/
-/*****************************************************************************/
-
-#define T14_2PI           16384
-#define T14_MASK          (T14_2PI - 1)
-#define T14_PI            (T14_2PI / 2)
-
-static int sigpsin15[18] = { /* significant points on sine wave (15-bit) */
-    0x0000,
-    0x0c88,0x18f8,0x2528,0x30f8,0x3c50,0x4718,0x5130,0x5a80,
-    0x62f0,0x6a68,0x70e0,0x7640,0x7a78,0x7d88,0x7f60,0x8000,
-    0x7f60
-};
-
-static int
-sintabil8(int n)
-{
-    int f, i, a, b;
-    
-    /* looks scary but if you don't change T14_2PI
-     * it won't cause out of bounds memory reads
-     */
-    f = n >> 0 & 0xff;
-    i = n >> 8 & 0xff;
-    a = sigpsin15[i];
-    b = sigpsin15[i + 1];
-    return (a + ((b - a) * f >> 8));
-}
-
-/* 14-bit interpolated sine/cosine */
-extern void
-crt_sincos14(int *s, int *c, int n)
-{
-    int h;
-    
-    n &= T14_MASK;
-    h = n & ((T14_2PI >> 1) - 1);
-    
-    if (h > ((T14_2PI >> 2) - 1)) {
-        *c = -sintabil8(h - (T14_2PI >> 2));
-        *s = sintabil8((T14_2PI >> 1) - h);
-    } else {
-        *c = sintabil8((T14_2PI >> 2) - h);
-        *s = sintabil8(h);
-    }
-    if (n > ((T14_2PI >> 1) - 1)) {
-        *c = -*c;
-        *s = -*s;
-    }
-}
-
-#define EXP_P         11
-#define EXP_ONE       (1 << EXP_P)
-#define EXP_MASK      (EXP_ONE - 1)
-#define EXP_PI        6434
-#define EXP_MUL(x, y) (((x) * (y)) >> EXP_P)
-#define EXP_DIV(x, y) (((x) << EXP_P) / (y))
-
-static int e11[] = {
-    EXP_ONE,
-    5567,  /* e   */
-    15133, /* e^2 */
-    41135, /* e^3 */
-    111817 /* e^4 */
-}; 
-
-/* fixed point e^x */
-static int
-expx(int n)
-{
-    int neg, idx, res;
-    int nxt, acc, del;
-    int i;
-
-    if (n == 0) {
-        return EXP_ONE;
-    }
-    neg = n < 0;
-    if (neg) {
-        n = -n;
-    }
-    idx = n >> EXP_P;
-    res = EXP_ONE;
-    for (i = 0; i < idx / 4; i++) {
-        res = EXP_MUL(res, e11[4]);
-    }
-    idx &= 3;
-    if (idx > 0) {
-        res = EXP_MUL(res, e11[idx]);
-    }
-    
-    n &= EXP_MASK;
-    nxt = EXP_ONE;
-    acc = 0;
-    del = 1;
-    for (i = 1; i < 17; i++) {
-        acc += nxt / del;
-        nxt = EXP_MUL(nxt, n);
-        del *= i;
-        if (del > nxt || nxt <= 0 || del <= 0) {
-            break;
-        }
-    }
-    res = EXP_MUL(res, acc);
-
-    if (neg) {
-        res = EXP_DIV(EXP_ONE, res);
-    }
-    return res;
-}
 
 /*****************************************************************************/
 /********************************* FILTERS ***********************************/
@@ -293,107 +178,12 @@ eqf(struct EQF *f, int s)
     return (r[0] + r[1] + r[2]);
 }
 
-/* infinite impulse response low pass filter for bandlimiting YIQ */
-static struct IIRLP {
-    int c;
-    int h; /* history */
-} iirY, iirI, iirQ;
-
-/* freq  - total bandwidth
- * limit - max frequency
- */
-static void
-init_iir(struct IIRLP *f, int freq, int limit)
-{
-    int rate; /* cycles/pixel rate */
-    
-    memset(f, 0, sizeof(struct IIRLP));
-    rate = (freq << 9) / limit;
-    f->c = EXP_ONE - expx(-((EXP_PI << 9) / rate));
-}
-
-static void
-reset_iir(struct IIRLP *f)
-{
-    f->h = 0;
-}
-
-/* hi-pass for debugging */
-#define HIPASS 0
-
-static int
-iirf(struct IIRLP *f, int s)
-{
-    f->h += EXP_MUL(s - f->h, f->c);
-#if HIPASS
-    return s - f->h;
-#else
-    return f->h;
-#endif
-}
-
-//Precalculate the low and high signal chosen for each 64 base colors
-//with their respective attenuated values
-// https://www.nesdev.org/wiki/NTSC_video#Brightness_Levels
-const int8_t IRE_levels[2][2][0x40] {
-   // waveform low
-   {
-      // normal
-      {
-            // 0x
-            43, -12, -12, -12, -12, -12, -12, -12, -12, -12, -12, -12, -12, -12, 0, 0,
-            // 1x
-            74, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            // 2x
-            110, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 0, 0,
-            // 3x
-            110, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 0, 0
-         },
-      // attenuated
-      {
-         // 0x
-         26 , -17, -17, -17, -17, -17, -17, -17, -17, -17, -17, -17, -17, -17, 0, 0,
-         // 1x
-         51, -8, -8, -8, -8, -8, -8, -8, -8, -8, -8, -8, -8, -8, 0, 0,
-         // 2x
-         82, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 0, 0,
-         // 3x
-         82, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 0, 0
-      }
-   },
-   // waveform high
-   {
-      // normal
-      {
-         // 0x
-         43, 43, 43, 43, 43, 43, 43, 43, 43, 43, 43, 43, 43, -12, 0, 0,
-         // 1x
-         74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 0, 0, 0,
-         // 2x
-         110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 34, 0, 0,
-         // 3x
-         110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 80, 0, 0
-         },
-      // attenuated
-      {
-         // 0x
-         26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, -17, 0, 0,
-         // 1x
-         51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, -8, 0, 0,
-         // 2x
-         82, 82, 82, 82, 82, 82, 82, 82, 82, 82, 82, 82, 82, 19, 0, 0,
-         // 3x
-         82, 82, 82, 82, 82, 82, 82, 82, 82, 82, 82, 82, 82, 56, 0, 0
-      }
-   }
-};
-
 /*****************************************************************************/
 /***************************** PUBLIC FUNCTIONS ******************************/
 /*****************************************************************************/
 
 extern void
-crt_resize(struct CRT *v, int w, int h, int *out)
+crtnes_resize(struct CRT *v, int w, int h, int *out)
 {    
     v->outw = w;
     v->outh = h;
@@ -401,25 +191,24 @@ crt_resize(struct CRT *v, int w, int h, int *out)
 }
 
 extern void
-crt_reset(struct CRT *v)
+crtnes_reset(struct CRT *v)
 {
     v->hue = 0;
     v->saturation = 18;
     v->brightness = 0;
     v->contrast = 180;
-    //v->black_point = 0;
-    //v->white_point = 100;
-    v->noise = 0;
+    v->black_point = 0;
+    v->white_point = 100;
     v->hsync = 0;
     v->vsync = 0;
 }
 
 extern void
-crt_init(struct CRT *v, int w, int h, int *out)
+crtnes_init(struct CRT *v, int w, int h, int *out)
 {
     memset(v, 0, sizeof(struct CRT));
-    crt_resize(v, w, h, out);
-    crt_reset(v);
+    crtnes_resize(v, w, h, out);
+    crtnes_reset(v);
             
     /* kilohertz to line sample conversion */
 #define kHz2L(kHz) (CRT_HRES * (kHz * 100) / L_FREQ)
@@ -430,49 +219,53 @@ crt_init(struct CRT *v, int w, int h, int *out)
     init_eq(&eqY, kHz2L(1500), kHz2L(3000), CRT_HRES, 65536, 8192, 9175);
     init_eq(&eqI, kHz2L(80),   kHz2L(1150), CRT_HRES, 65536, 65536, 1311);
     init_eq(&eqQ, kHz2L(80),   kHz2L(1000), CRT_HRES, 65536, 65536, 0);
-    
-    init_iir(&iirY, L_FREQ, Y_FREQ);
-    init_iir(&iirI, L_FREQ, I_FREQ);
-    init_iir(&iirQ, L_FREQ, Q_FREQ);
 }
 
 /* generate the square wave for a given 9-bit pixel and phase */
 static int
-square_sample(int pixel_color, int phase)
+square_sample(int p, int phase)
 {
     static int active[6] = {
-        0x0C0, 0x040,
-        0x140, 0x100,
-        0x180, 0x080
+        0300, 0100,
+        0500, 0400,
+        0600, 0200
     };
-    int pixel_index, hue, level, emphasis = 0;
-    pixel_index = pixel_color & 0x3F;
-    hue = (pixel_index & 0x0f);
+    int bri, hue, v;
 
-    if (hue >= 0x0e) return 0;
+    hue = (p & 0x0f);
+    
+    /* last two columns are black */
+    if (hue >= 0x0e) {
+        return 0;
+    }
 
+    bri = ((p & 0x30) >> 4) * 300;
+    
     switch (hue) {
-    case 0:
-       level = 1;
-       break;
-    case 0x0d:
-       level = 0;
-       break;
-    default:
-       level = (((hue + phase) % 12) < 6);
-       break;
+        case 0:
+            v = bri + 410;
+            break;
+        case 0x0d:
+            v = bri - 300;
+            break;
+        default:
+            v = (((hue + phase) % 12) < 6) ? (bri + 410) : (bri - 300);
+            break;
     }
 
+    if (v > 1024) {
+        v = 1024;
+    }
     /* red 0100, green 0200, blue 0400 */
-    if (((pixel_color & 0x1C0) & active[(phase >> 1) % 6]) && hue < 0x0e) {
-       emphasis = 1;
+    if ((p & 0700) & active[(phase >> 1) % 6]) {
+        return (v >> 1) + (v >> 2);
     }
 
-    return IRE_levels[level][emphasis][(pixel_index)];
+    return v;
 }
 
 extern void
-crt_nes2ntsc(struct CRT *v, struct NES_NTSC_SETTINGS *s)
+crtnes_2ntsc(struct CRT *v, struct NES_NTSC_SETTINGS *s)
 {
     int x, y, xo, yo;
     int destw = AV_LEN;
@@ -543,19 +336,19 @@ crt_nes2ntsc(struct CRT *v, struct NES_NTSC_SETTINGS *s)
         
         t = LINE_BEG;
 
-        // vertical sync scanlines
+        /* vertical sync scanlines */
         if (n >= 259 && n <= CRT_VRES) {
            while (t < SYNC_BEG) line[t++] = BLANK_LEVEL; /* FP */
            while (t < PPUpx2pos(327)) line[t++] = SYNC_LEVEL; /* sync separator */
            while (t < CRT_HRES) line[t++] = BLANK_LEVEL; /* blank */
         } else {
+            int cb, skipdot;
             /* prerender/postrender/video scanlines */
             while (t < SYNC_BEG) line[t++] = BLANK_LEVEL; /* FP */
             while (t < BW_BEG) line[t++] = SYNC_LEVEL;  /* SYNC */
             while (t < CB_BEG) line[t++] = BLANK_LEVEL; /* BW + CB + BP */
-            int cb;
             /* CB_CYCLES of color burst at 3.579545 Mhz */
-            int skipdot = PPUpx2pos(((n == 14 && s->dot_skipped) ? 1 : 0));
+            skipdot = PPUpx2pos(((n == 14 && s->dot_skipped) ? 1 : 0));
             for (t = CB_BEG; t < CB_BEG + (CB_CYCLES * CRT_CB_FREQ) - skipdot; t++) {
                 cb = s->cc[(t + po) & 3];
                 line[t] = BLANK_LEVEL + (cb * BURST_LEVEL) / s->ccs;
@@ -567,18 +360,17 @@ crt_nes2ntsc(struct CRT *v, struct NES_NTSC_SETTINGS *s)
                 while (t < CRT_HRES) {
                     int ire, p;
                     p = s->borderdata;
-                    if (t == AV_BEG) p = 0xF0;
-                    ire = BLACK_LEVEL;
+                    if (t == AV_BEG) p = 0xf0;
+                    ire = BLACK_LEVEL + v->black_point;
                     ire += square_sample(p, phase + 0);
                     ire += square_sample(p, phase + 1);
                     ire += square_sample(p, phase + 2);
                     ire += square_sample(p, phase + 3);
-                    ire >>= 2;
+                    ire = (ire * (WHITE_LEVEL * v->white_point / 100)) >> 12;
                     line[t++] = ire;
                     phase += 3;
                 }
-            }
-            else {
+            } else {
                 while (t < CRT_HRES) line[t++] = BLANK_LEVEL;
                 phase += (CRT_HRES - AV_BEG) * 3;
             }
@@ -599,12 +391,12 @@ crt_nes2ntsc(struct CRT *v, struct NES_NTSC_SETTINGS *s)
             int ire, p;
             
             p = s->data[((x * s->w) / destw) + sy];
-            ire = BLANK_LEVEL;
+            ire = BLACK_LEVEL + v->black_point;
             ire += square_sample(p, phase + 0);
             ire += square_sample(p, phase + 1);
             ire += square_sample(p, phase + 2);
             ire += square_sample(p, phase + 3);
-            ire >>= 2;
+            ire = (ire * (WHITE_LEVEL * v->white_point / 100)) >> 12;
             v->analog[(x + xo) + (y + yo) * CRT_HRES] = ire;
             phase += 3;
         }
@@ -618,7 +410,7 @@ crt_nes2ntsc(struct CRT *v, struct NES_NTSC_SETTINGS *s)
 #define VSYNC_WINDOW 6
 
 extern void
-crt_draw(struct CRT *v)
+crtnes_draw(struct CRT *v, int noise)
 {
     struct {
         int y, i, q;
@@ -628,7 +420,7 @@ crt_draw(struct CRT *v)
     int prev_e; /* filtered beam energy per scan line */
     int max_e; /* approx maximum energy in a scan line */
 #endif
-    int bright = v->brightness - (BLACK_LEVEL); //+ v->black_point);
+    int bright = v->brightness - (BLACK_LEVEL + v->black_point);
     signed char *sig;
     int s = 0;
     int field, ratio;
@@ -651,7 +443,7 @@ crt_draw(struct CRT *v)
         rn = (214019 * rn + 140327895);
 
         /* signal + noise */
-        s = v->analog[i] + (((((rn >> 16) & 0xff) - 0x7f) * v->noise) >> 8);
+        s = v->analog[i] + (((((rn >> 16) & 0xff) - 0x7f) * noise) >> 8);
         if (s >  127) { s =  127; }
         if (s < -127) { s = -127; }
         v->inp[i] = s;
