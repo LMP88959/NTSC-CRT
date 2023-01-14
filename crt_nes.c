@@ -416,7 +416,7 @@ crtnes_draw(struct CRT *v, int noise)
     struct {
         int y, i, q;
     } out[AV_LEN + 1], *yiqA, *yiqB;
-    int i, j, line;
+    int i, j, line, rn;
 #if CRT_DO_BLOOM
     int prev_e; /* filtered beam energy per scan line */
     int max_e; /* approx maximum energy in a scan line */
@@ -438,7 +438,7 @@ crtnes_draw(struct CRT *v, int noise)
     ccref[2] = v->ccf[2] << 7;
     ccref[3] = v->ccf[3] << 7;
 
-    int rn = v->rn;
+    rn = v->rn;
     for (i = 0; i < CRT_INPUT_SIZE; i++) {
         rn = (214019 * rn + 140327895);
 
@@ -537,8 +537,9 @@ vsync_found:
        
         sig = v->inp + ln + (v->hsync & ~3); /* burst @ 1/CB_FREQ sample rate */
         for (i = CB_BEG; i < CB_BEG + (CB_CYCLES * CRT_CB_FREQ); i++) {
-            int p = ccref[i & 3] * 127 / 128; /* fraction of the previous */
-            int n = sig[i];                   /* mixed with the new sample */
+            int p, n;
+            p = ccref[i & 3] * 127 / 128; /* fraction of the previous */
+            n = sig[i];                   /* mixed with the new sample */
             ccref[i & 3] = p + n;
         }
         xpos = POSMOD(PPUAV_BEG + v->hsync + xnudge, CRT_HRES);
