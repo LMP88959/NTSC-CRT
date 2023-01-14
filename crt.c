@@ -293,7 +293,8 @@ crt_init(struct CRT *v, int w, int h, int *out)
     memset(v, 0, sizeof(struct CRT));
     crt_resize(v, w, h, out);
     crt_reset(v);
-            
+    v->rn = 194;
+    
     /* kilohertz to line sample conversion */
 #define kHz2L(kHz) (CRT_HRES * (kHz * 100) / L_FREQ)
     
@@ -574,7 +575,7 @@ crt_draw(struct CRT *v, int noise)
     struct {
         int y, i, q;
     } out[AV_LEN + 1], *yiqA, *yiqB;
-    int i, j, line;
+    int i, j, line, rn;
 #if CRT_DO_BLOOM
     int prev_e; /* filtered beam energy per scan line */
     int max_e; /* approx maximum energy in a scan line */
@@ -595,9 +596,8 @@ crt_draw(struct CRT *v, int noise)
     ccref[2] = v->ccf[2] << 7;
     ccref[3] = v->ccf[3] << 7;
 
+    rn = v->rn;
     for (i = 0; i < CRT_INPUT_SIZE; i++) {
-        static int rn = 194; /* 'random' noise */
-
         rn = (214019 * rn + 140327895);
 
         /* signal + noise */
@@ -606,6 +606,7 @@ crt_draw(struct CRT *v, int noise)
         if (s < -127) { s = -127; }
         v->inp[i] = s;
     }
+    v->rn = rn;
 
     /* Look for vertical sync.
      * 
