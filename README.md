@@ -56,6 +56,15 @@ to provide real-time NTSC emulation with adjustable parameters.
 The famous waterfall 'rainbow' effect created as a result of dithering will show if it is compiled with `CRT_CHROMA_PATTERN` set to 0.
 Specially patterned black and white images can be encoded/decoded with color just like a real composite NTSC display.
 
+## Regarding NES Mode
+
+NES Mode is a separate version of NTSC-CRT that has adjusted timings to match the non-standard NES specifications.  
+https://www.nesdev.org/wiki/NTSC_video  
+These timings and extra NES specific features were incorporated into the NES version by Persune.  
+Extra features include the NES-specific NTSC frame pulses, dot skipping every odd frame, and border colors.
+
+#### `Massive thank you to Persune for helping improve the NES version!`
+
 ## Compiling
 
 ```sh
@@ -91,7 +100,7 @@ sample usage: ./ntsc - 832 624 0 2 in.bmp out.bmp
 by default, the image will be full color, interlaced, and scaled to the output dimensions
 ```
 
-There is also the option of "live" rendering to a video window from an input PPM image file:
+There is also the option of "live" rendering to a video window from an input PPM/BMP image file:
 
 ```sh
 cmake -B build -Dlive=on
@@ -99,6 +108,7 @@ cmake --build build
 build/ntsc my.ppm
 ```
 
+### Other Information
 Web version by @binji (might not be up to date):  
 https://binji.github.io/NTSC-CRT/  
 To use the web version, drag a PPM image into the web browser.
