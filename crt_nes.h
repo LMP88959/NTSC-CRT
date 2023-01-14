@@ -10,7 +10,6 @@
  *   Discord: https://discord.com/invite/hdYctSmyQJ
  */
 /*****************************************************************************/
-#pragma once
 
 #ifndef _CRT_H_
 #define _CRT_H_

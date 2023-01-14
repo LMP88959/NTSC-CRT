@@ -10,7 +10,6 @@
  *   Discord: https://discord.com/invite/hdYctSmyQJ
  */
 /*****************************************************************************/
-#include "stdafx.h"
 
 #include "crt.h"
 
