@@ -8,7 +8,6 @@
  *   Discord: https://discord.com/invite/hdYctSmyQJ
  */
 /*****************************************************************************/
-#include "crt.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -16,16 +15,22 @@
 #include <errno.h>
 #include "ppm_rw.h"
 #include "bmp_rw.h"
+#include "crt_sincos.h"
+
+#define CMD_LINE_VERSION 1
+#define CRT_NES_MODE 0
+/* no NES command line version */
+#if (!CMD_LINE_VERSION && CRT_NES_MODE)
+#include "crt_nes.h"
+#else
+#include "crt.h"
+#endif
 
 static int
 cmpsuf(char *s, char *suf, int nc)
 {
     return strcmp(s + strlen(s) - nc, suf);
 }
-
-#ifndef CMD_LINE_VERSION
-#define CMD_LINE_VERSION 1
-#endif
 
 #if CMD_LINE_VERSION
 
@@ -367,7 +372,11 @@ updatecb(void)
         color ^= 1;
     }
     if (pkb_key_pressed('r')) {
+#if CRT_NES_MODE
+        crtnes_reset(&crt);
+#else
         crt_reset(&crt);
+#endif
     }
     if (pkb_key_pressed('f')) {
         field ^= 1;
@@ -423,8 +432,11 @@ fade_phosphors(void)
 static void
 displaycb(void)
 {
-    static struct NTSC_SETTINGS ntsc;
+#if CRT_NES_MODE
     static struct NES_NTSC_SETTINGS nes;
+#else
+    static struct NTSC_SETTINGS ntsc;
+#endif
     static int fno = 0;
     int phase_ref[4] = { 0, 1, 0, -1 };
     int sn, cs;
@@ -443,13 +455,14 @@ displaycb(void)
     nes.w = 256;
     nes.h = 240;
     nes.dot_crawl_offset = fno++ % 3;
-    nes.as_color = cmod;
+    nes.dot_skipped = cmod; /* this is a dud -- actual value should be handled by emulator */
     nes.cc[0] = phase_ref[(phase_offset + 0) & 3];
     nes.cc[1] = phase_ref[(phase_offset + 1) & 3];
     nes.cc[2] = phase_ref[(phase_offset + 2) & 3];
     nes.cc[3] = phase_ref[(phase_offset + 3) & 3];
     nes.ccs = 16;
-    crt_nes2ntsc(&crt, &nes);
+    crtnes_2ntsc(&crt, &nes);
+    crtnes_draw(&crt, noise);
 #else
     ntsc.rgb = img;
     ntsc.w = imgw;
@@ -463,10 +476,8 @@ displaycb(void)
     ntsc.cc[3] = phase_ref[(phase_offset + 3) & 3];
     ntsc.ccs = 16;
     crt_2ntsc(&crt, &ntsc);
-#endif
-    
     crt_draw(&crt, noise);
-
+#endif
     vid_blit();
     vid_sync();
 }
@@ -496,8 +507,11 @@ main(int argc, char **argv)
     info = vid_getinfo();
     video = info->video;
 
+#if CRT_NES_MODE
+    crtnes_init(&crt, info->width, info->height, video);
+#else
     crt_init(&crt, info->width, info->height, video);
-
+#endif
     char *input_file;
     if (argc == 1) {
         fprintf(stderr, "Please specify PPM or BMP image input file.\n");
