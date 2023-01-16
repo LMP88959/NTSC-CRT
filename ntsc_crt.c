@@ -284,6 +284,7 @@ static int raw = 0;
 static int phase_offset = 0;
 static int unlocked_phase = 0; /* color phase changes every field */
 static int hue = 0;
+static int fadephos = 1; /* fade phosphors each frame */
 
 static void
 updatecb(void)
@@ -371,6 +372,11 @@ updatecb(void)
     if (pkb_key_pressed(FW_KEY_SPACE)) {
         color ^= 1;
     }
+    
+    if (pkb_key_pressed('m')) {
+        fadephos ^= 1;
+        printf("fadephos: %d\n", fadephos);
+    }
     if (pkb_key_pressed('r')) {
 #if CRT_NES_MODE
         crtnes_reset(&crt);
@@ -446,8 +452,11 @@ displaycb(void)
         crt_sincos14(&sn, &cs, (hue + i * 90) * 8192 / 180);
         phase_ref[i] = sn >> 11;
     }
-    
-    fade_phosphors();
+    if (fadephos) {
+        fade_phosphors();
+    } else {
+        memset(video, 0, info->width * info->height * sizeof(int));
+    }
     /* not necessary to clear if you're rendering on a constant region of the display */
     /* memset(crt.analog, 0, sizeof(crt.analog)); */
 #if CRT_NES_MODE
