@@ -96,7 +96,6 @@ struct NES_NTSC_SETTINGS {
     int w, h;       /* width and height of image */
     int raw;        /* 0 = scale image to fit monitor, 1 = don't scale */
     int dot_crawl_offset; /* 0, 1, or 2 */
-    int dot_skipped;
     /* NOTE: NES mode is always progressive */
     /* color carrier sine wave.
      * ex: { 0, 1, 0, -1 }
