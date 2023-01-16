@@ -343,14 +343,13 @@ crtnes_2ntsc(struct CRT *v, struct NES_NTSC_SETTINGS *s)
            while (t < PPUpx2pos(327)) line[t++] = SYNC_LEVEL; /* sync separator */
            while (t < CRT_HRES) line[t++] = BLANK_LEVEL; /* blank */
         } else {
-            int cb, skipdot;
+            int cb;
             /* prerender/postrender/video scanlines */
             while (t < SYNC_BEG) line[t++] = BLANK_LEVEL; /* FP */
             while (t < BW_BEG) line[t++] = SYNC_LEVEL;  /* SYNC */
             while (t < CB_BEG) line[t++] = BLANK_LEVEL; /* BW + CB + BP */
             /* CB_CYCLES of color burst at 3.579545 Mhz */
-            skipdot = PPUpx2pos(((n == 14 && s->dot_skipped) ? 1 : 0));
-            for (t = CB_BEG; t < CB_BEG + (CB_CYCLES * CRT_CB_FREQ) - skipdot; t++) {
+            for (t = CB_BEG; t < CB_BEG + (CB_CYCLES * CRT_CB_FREQ); t++) {
                 cb = s->cc[(t + po) & 3];
                 line[t] = BLANK_LEVEL + (cb * BURST_LEVEL) / s->ccs;
                 v->ccf[t & 3] = line[t];
