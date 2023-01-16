@@ -329,7 +329,7 @@ crtnes_2ntsc(struct CRT *v, struct NES_NTSC_SETTINGS *s)
     }
 #endif
 
-    phase = (1 + po) * 3;
+    phase = po * 3;
 
     for (n = 0; n < CRT_VRES; n++) {
         int t; /* time */
