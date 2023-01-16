@@ -464,7 +464,6 @@ displaycb(void)
     nes.w = 256;
     nes.h = 240;
     nes.dot_crawl_offset = fno++ % 3;
-    nes.dot_skipped = cmod; /* this is a dud -- actual value should be handled by emulator */
     nes.cc[0] = phase_ref[(phase_offset + 0) & 3];
     nes.cc[1] = phase_ref[(phase_offset + 1) & 3];
     nes.cc[2] = phase_ref[(phase_offset + 2) & 3];
