@@ -11,6 +11,10 @@ NTSC video signal encoding / decoding emulation by EMMIR 2018-2023
 ### Example of artifact colors creating a rainbow by specially designed art (not my own)
 ![alt text](/rainbow.png?raw=true)
 
+### Example of dot crawl in a standard interlaced NTSC video
+https://user-images.githubusercontent.com/109979235/212872851-38d0558e-b4bb-4011-8090-046e585093c9.mov
+
+
 ### NES mode  
 YouTube video of the filter running in an NES emulator:
 https://www.youtube.com/watch?v=giML77yy7To
