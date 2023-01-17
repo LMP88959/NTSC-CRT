@@ -221,6 +221,9 @@ main(int argc, char **argv)
     ntsc.raw = raw;
     ntsc.hue = hue;
     ntsc.frame = 0;
+    
+    crt.blend = 1;
+    crt.scanlines = 1;
 
     printf("converting to %dx%d...\n", outw, outh);
     err = 0;
@@ -491,6 +494,8 @@ main(int argc, char **argv)
     video = info->video;
 
     crt_init(&crt, info->width, info->height, video);
+    crt.blend = 1;
+    crt.scanlines = 1;
 
     if (argc == 1) {
         fprintf(stderr, "Please specify PPM or BMP image input file.\n");
