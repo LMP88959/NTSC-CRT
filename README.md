@@ -37,8 +37,8 @@ This program performs relatively well and can be easily used in real-time applic
 to emulate NTSC output. It is by no means fully optimized (mainly for readability), so  
 there is a lot of room for performance gains.
 
-================================================================
-Feature List:
+------
+### Feature List:
 
 - Relatively accurate composite NTSC image output  
   -- with bandlimited luma/chroma  
