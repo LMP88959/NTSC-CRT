@@ -90,9 +90,9 @@ build/ntsc
 The default command line takes a single PPM or BMP image file and outputs a processed PPM or BMP file:
 
 ```
-usage: ntsc -m|o|f|p|r|h outwidth outheight noise artifact_hue infile outfile
-sample usage: ntsc -op 640 480 24 0 in.ppm out.ppm
-sample usage: ntsc - 832 624 0 90 in.ppm out.ppm
+usage: ./ntsc -m|o|f|p|r|h outwidth outheight noise artifact_hue infile outfile
+sample usage: ./ntsc -op 640 480 24 0 in.ppm out.ppm
+sample usage: ./ntsc - 832 624 0 90 in.ppm out.ppm
 -- NOTE: the - after the program name is required
 	artifact_hue is [0, 359]
 ------------------------------------------------------------
