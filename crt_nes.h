@@ -20,16 +20,10 @@ extern "C" {
 
 /* crt_nes.h
  *
- * A composite modem specifically for NES output
+ * An interface to convert NES PPU output to an analog NTSC signal.
  *
  */
 
-#define CRT_NES_HIRES 0
-
-/* do bloom emulation (side effect: makes screen have black borders) */
-#define CRT_DO_BLOOM    0
-#define CRT_DO_VSYNC    1  /* look for VSYNC */
-#define CRT_DO_HSYNC    1  /* look for HSYNC */
 /* 0 = vertical  chroma (228 chroma clocks per line) */
 /* 1 = checkered chroma (227.5 chroma clocks per line) */
 /* 2 = sawtooth  chroma (227.3 chroma clocks per line) */
@@ -46,11 +40,7 @@ extern "C" {
 #endif
 
 /* NOTE, in general, increasing CRT_CB_FREQ reduces blur and bleed */
-#if CRT_NES_HIRES
-#define CRT_CB_FREQ     6 /* carrier frequency relative to sample rate */
-#else
 #define CRT_CB_FREQ     4 /* carrier frequency relative to sample rate */
-#endif
 
 /* https://www.nesdev.org/wiki/NTSC_video#Scanline_Timing */
 #define CRT_HRES        (CRT_CC_LINE * CRT_CB_FREQ / 10) /* horizontal res */
@@ -61,64 +51,78 @@ extern "C" {
 #define CRT_BOT         255    /* final line with active video */
 #define CRT_LINES       (CRT_BOT - CRT_TOP) /* number of active video lines */
 
-struct CRT {
-    signed char analog[CRT_INPUT_SIZE];
-    signed char inp[CRT_INPUT_SIZE]; /* CRT input, can be noisy */
-    int ccf[4]; /* color carrier reference for faster convergence */
-    int hsync, vsync; /* used internally to keep track of sync over frames */
-    int hue, brightness, contrast, saturation; /* common monitor settings */
-    int black_point, white_point; /* user-adjustable */
-    int outw, outh; /* output width/height */
-    int *out; /* output image */
-    int rn; /* 'random' noise */
-};
-
-/* Initializes the library. Sets up filters.
- *   w   - width of the output image
- *   h   - height of the output image
- *   out - pointer to output image data 32-bit RGB packed as 0xXXRRGGBB
+/* NES composite signal is measured in terms of PPU pixels, or cycles
+ * https://www.nesdev.org/wiki/NTSC_video#Scanline_Timing
+ *
+ *                         FULL HORIZONTAL LINE SIGNAL
+ *             (341 PPU px; one cycle skipped on odd rendered frames)
+ * |---------------------------------------------------------------------------|
+ *   HBLANK (58 PPU px)               ACTIVE VIDEO (283 PPU px)
+ * |-------------------||------------------------------------------------------|
+ *
+ *
+ *   WITHIN HBLANK PERIOD:
+ *
+ *   FP (9 PPU px)  SYNC (25 PPU px) BW (4 PPU px) CB (15 PPU px) BP (5 PPU px)
+ * |--------------||---------------||------------||-------------||-------------|
+ *      BLANK            SYNC           BLANK          BLANK          BLANK
+ *
+ *
+ *   WITHIN ACTIVE VIDEO PERIOD:
+ *
+ *   LB (15 PPU px)                 AV (256 PPU px)               RB (11 PPU px)
+ * |--------------||--------------------------------------------||-------------|
+ *      BORDER                           VIDEO                        BORDER
+ *
  */
-extern void crtnes_init(struct CRT *v, int w, int h, int *out);
+#define LINE_BEG         0
+#define FP_PPUpx         9         /* front porch */
+#define SYNC_PPUpx       25        /* sync tip */
+#define BW_PPUpx         4         /* breezeway */
+#define CB_PPUpx         15        /* color burst */
+#define BP_PPUpx         5         /* back porch */
+#define PS_PPUpx         1         /* pulse */
+#define LB_PPUpx         15        /* left border */
+#define AV_PPUpx         256       /* active video */
+#define RB_PPUpx         11        /* right border */
+#define HB_PPUpx         (FP_PPUpx + SYNC_PPUpx + BW_PPUpx + CB_PPUpx + BP_PPUpx) /* h blank */
+/* line duration should be ~63500 ns */
+#define LINE_PPUpx       (FP_PPUpx + SYNC_PPUpx + BW_PPUpx + CB_PPUpx + BP_PPUpx + PS_PPUpx + LB_PPUpx + AV_PPUpx + RB_PPUpx)
 
-/* Updates the output image parameters
- *   w   - width of the output image
- *   h   - height of the output image
- *   out - pointer to output image data 32-bit RGB packed as 0xXXRRGGBB
- */
-extern void crtnes_resize(struct CRT *v, int w, int h, int *out);
+/* convert pixel offset to its corresponding point on the sampled line */
+#define PPUpx2pos(PPUpx) ((PPUpx) * CRT_HRES / LINE_PPUpx)
+/* starting points for all the different pulses */
+#define FP_BEG           PPUpx2pos(0)                                           /* front porch point */
+#define SYNC_BEG         PPUpx2pos(FP_PPUpx)                                    /* sync tip point */
+#define BW_BEG           PPUpx2pos(FP_PPUpx + SYNC_PPUpx)                       /* breezeway point */
+#define CB_BEG           PPUpx2pos(FP_PPUpx + SYNC_PPUpx + BW_PPUpx)            /* color burst point */
+#define BP_BEG           PPUpx2pos(FP_PPUpx + SYNC_PPUpx + BW_PPUpx + CB_PPUpx) /* back porch point */
+#define LAV_BEG          PPUpx2pos(HB_PPUpx)                                    /* full active video point */
+#define AV_BEG           PPUpx2pos(HB_PPUpx + PS_PPUpx + LB_PPUpx)              /* PPU active video point */
+#define AV_LEN           PPUpx2pos(AV_PPUpx)                                    /* active video length */
 
-/* Resets the CRT settings back to their defaults */
-extern void crtnes_reset(struct CRT *v);
+/* somewhere between 7 and 12 cycles */
+#define CB_CYCLES   10
 
-struct NES_NTSC_SETTINGS {
+/* line frequency */
+#define L_FREQ           1431818 /* full line */
+
+/* IRE units (100 = 1.0V, -40 = 0.0V) */
+/* https://www.nesdev.org/wiki/NTSC_video#Terminated_measurement */
+#define WHITE_LEVEL      110
+#define BURST_LEVEL      30
+#define BLACK_LEVEL      0
+#define BLANK_LEVEL      0
+#define SYNC_LEVEL      -37
+
+struct NTSC_SETTINGS {
     const unsigned short *data; /* 6 or 9-bit NES 'pixels' */
-	unsigned int borderdata; /* border color, either BG or black */
     int w, h;       /* width and height of image */
-    int raw;        /* 0 = scale image to fit monitor, 1 = don't scale */
+    unsigned int border_color; /* either BG or black */
     int dot_crawl_offset; /* 0, 1, or 2 */
     /* NOTE: NES mode is always progressive */
-    /* color carrier sine wave.
-     * ex: { 0, 1, 0, -1 }
-     * ex: { 1, 0, -1, 0 }
-     */
-    int cc[4];
-    /* scale value for values in cc
-     * for example, if using { 0, 1, 0, -1 }, ccs should be 1.
-     * however, if using { 0, 16, 0, -16 }, ccs should be 16.
-     * For best results, don't scale the cc values more than 16.
-     */
-    int ccs;
+    int hue;              /* 0-359 */
 };
-
-/* Convert NES pixel data (generally 256x240) to analog NTSC signal
- *   s - struct containing settings to apply to this field
- */
-extern void crtnes_2ntsc(struct CRT *v, struct NES_NTSC_SETTINGS *s);
-
-/* Decodes the NTSC signal generated by crt_2ntsc()
- *   noise - the amount of noise added to the signal (0 - inf)
- */
-extern void crtnes_draw(struct CRT *v, int noise);
 
 #ifdef __cplusplus
 }

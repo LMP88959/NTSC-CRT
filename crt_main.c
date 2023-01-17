@@ -15,17 +15,13 @@
 #include <errno.h>
 #include "ppm_rw.h"
 #include "bmp_rw.h"
-#include "crt_sincos.h"
+#include "crt_core.h"
 
 #define CMD_LINE_VERSION 1
-#define CRT_NES_MODE 0
-/* no NES command line version */
-#if (!CMD_LINE_VERSION && CRT_NES_MODE)
-#include "crt_nes.h"
-#else
-#include "crt.h"
+/* there is no NES command line version */
+#if ((CRT_SYSTEM == CRT_SYSTEM_NES) && CMD_LINE_VERSION)
+#error NES mode does not have a command line version
 #endif
-
 static int
 cmpsuf(char *s, char *suf, int nc)
 {
@@ -41,7 +37,7 @@ static int docolor = 1;
 static int field = 0;
 static int progressive = 0;
 static int raw = 0;
-static int phase_offset = 0;
+static int hue = 0;
 
 static int
 stoint(char *s, int *err)
@@ -69,11 +65,11 @@ static void
 usage(char *p)
 {
     printf(DRV_HEADER);
-    printf("usage: %s -m|o|f|p|r|h outwidth outheight noise phase_offset infile outfile\n", p);
-    printf("sample usage: %s -op 640 480 24 3 in.ppm out.ppm\n", p);
-    printf("sample usage: %s - 832 624 0 2 in.bmp out.bmp\n", p);
+    printf("usage: %s -m|o|f|p|r|h outwidth outheight noise artifact_hue infile outfile\n", p);
+    printf("sample usage: %s -op 640 480 24 0 in.ppm out.ppm\n", p);
+    printf("sample usage: %s - 832 624 0 90 in.ppm out.ppm\n", p);
     printf("-- NOTE: the - after the program name is required\n");
-    printf("\tphase_offset is [0, 1, 2, or 3] +1 means a color phase change of 90 degrees\n");
+    printf("\tartifact_hue is [0, 359]\n");
     printf("------------------------------------------------------------\n");
     printf("\tm : monochrome\n");
     printf("\to : do not prompt when overwriting files\n");
@@ -154,7 +150,6 @@ main(int argc, char **argv)
     char *input_file;
     char *output_file;
     int err = 0;
-    int phase_ref[4] = { 0, 1, 0, -1 };
 
     if (argc < 8) {
         usage(argv[0]);
@@ -184,12 +179,12 @@ main(int argc, char **argv)
 
     if (noise < 0) noise = 0;
 
-    phase_offset = stoint(argv[5], &err);
+    hue = stoint(argv[5], &err);
     if (err) {
         return EXIT_FAILURE;
     }
-    phase_offset &= 3;
-
+    hue %= 360;
+    
     output = calloc(outw * outh, sizeof(int));
     if (output == NULL) {
         printf("out of memory\n");
@@ -224,22 +219,28 @@ main(int argc, char **argv)
     ntsc.as_color = docolor;
     ntsc.field = field & 1;
     ntsc.raw = raw;
-    ntsc.cc[0] = phase_ref[(phase_offset + 0) & 3];
-    ntsc.cc[1] = phase_ref[(phase_offset + 1) & 3];
-    ntsc.cc[2] = phase_ref[(phase_offset + 2) & 3];
-    ntsc.cc[3] = phase_ref[(phase_offset + 3) & 3];
-    ntsc.ccs = 1;
+    ntsc.hue = hue;
+    ntsc.frame = 0;
+    
+    crt.blend = 1;
+    crt.scanlines = 1;
 
     printf("converting to %dx%d...\n", outw, outh);
     err = 0;
+   
     /* accumulate 4 frames */
     while (err < 4) {
-        crt_2ntsc(&crt, &ntsc);
-        crt_draw(&crt, noise);
+        crt_modulate(&crt, &ntsc);
+        crt_demodulate(&crt, noise);
         if (!progressive) {
             ntsc.field ^= 1;
-            crt_2ntsc(&crt, &ntsc);
-            crt_draw(&crt, noise);
+            crt_modulate(&crt, &ntsc);
+            crt_demodulate(&crt, noise);
+            if ((err & 1) == 0) {
+                /* a frame is two fields */
+                ntsc.frame++;
+                ntsc.frame &= 1;
+            }
         }
         err++;
     }
@@ -277,12 +278,11 @@ static int imgw;
 static int imgh;
 
 static int color = 1;
-static int noise = 24;
+static int noise = 12;
 static int field = 0;
 static int progressive = 0;
 static int raw = 0;
-static int phase_offset = 0;
-static int unlocked_phase = 0; /* color phase changes every field */
+static int fno = 0; /* frame number */
 static int hue = 0;
 static int fadephos = 1; /* fade phosphors each frame */
 
@@ -378,11 +378,15 @@ updatecb(void)
         printf("fadephos: %d\n", fadephos);
     }
     if (pkb_key_pressed('r')) {
-#if CRT_NES_MODE
-        crtnes_reset(&crt);
-#else
         crt_reset(&crt);
-#endif
+    }
+    if (pkb_key_pressed('g')) {
+        crt.scanlines ^= 1;
+        printf("crt.scanlines: %d\n", crt.scanlines);
+    }
+    if (pkb_key_pressed('b')) {
+        crt.blend ^= 1;
+        printf("crt.blend: %d\n", crt.blend);
     }
     if (pkb_key_pressed('f')) {
         field ^= 1;
@@ -401,20 +405,6 @@ updatecb(void)
         memset(crt.analog, 0, sizeof(crt.analog));
         raw ^= 1;
         printf("raw: %d\n", raw);
-    }
-    if (pkb_key_pressed('p')) {
-        phase_offset++;
-        phase_offset &= 3;
-    }
-    if (pkb_key_pressed('o')) {
-        unlocked_phase ^= 1;
-    }
-    if (unlocked_phase) {
-        phase_offset++;
-        phase_offset &= 3;
-    }
-    if (!progressive) {
-        field ^= 1;
     }
 }
 
@@ -438,20 +428,8 @@ fade_phosphors(void)
 static void
 displaycb(void)
 {
-#if CRT_NES_MODE
-    static struct NES_NTSC_SETTINGS nes;
-#else
     static struct NTSC_SETTINGS ntsc;
-#endif
-    static int fno = 0;
-    int phase_ref[4] = { 0, 1, 0, -1 };
-    int sn, cs;
-    int i;
-    
-    for (i = 0; i < 4; i++) {
-        crt_sincos14(&sn, &cs, (hue + i * 90) * 8192 / 180);
-        phase_ref[i] = sn >> 11;
-    }
+  
     if (fadephos) {
         fade_phosphors();
     } else {
@@ -459,18 +437,13 @@ displaycb(void)
     }
     /* not necessary to clear if you're rendering on a constant region of the display */
     /* memset(crt.analog, 0, sizeof(crt.analog)); */
-#if CRT_NES_MODE
-    nes.data = ppu_output_256x240;
-    nes.w = 256;
-    nes.h = 240;
-    nes.dot_crawl_offset = fno++ % 3;
-    nes.cc[0] = phase_ref[(phase_offset + 0) & 3];
-    nes.cc[1] = phase_ref[(phase_offset + 1) & 3];
-    nes.cc[2] = phase_ref[(phase_offset + 2) & 3];
-    nes.cc[3] = phase_ref[(phase_offset + 3) & 3];
-    nes.ccs = 16;
-    crtnes_2ntsc(&crt, &nes);
-    crtnes_draw(&crt, noise);
+#if (CRT_SYSTEM == CRT_SYSTEM_NES)
+    ntsc.data = ppu_output_256x240;
+    ntsc.border_color = 0x22;
+    ntsc.w = 256;
+    ntsc.h = 240;
+    ntsc.dot_crawl_offset = fno++ % 3;
+    ntsc.hue = hue;
 #else
     ntsc.rgb = img;
     ntsc.w = imgw;
@@ -478,14 +451,18 @@ displaycb(void)
     ntsc.as_color = color;
     ntsc.field = field & 1;
     ntsc.raw = raw;
-    ntsc.cc[0] = phase_ref[(phase_offset + 0) & 3];
-    ntsc.cc[1] = phase_ref[(phase_offset + 1) & 3];
-    ntsc.cc[2] = phase_ref[(phase_offset + 2) & 3];
-    ntsc.cc[3] = phase_ref[(phase_offset + 3) & 3];
-    ntsc.ccs = 16;
-    crt_2ntsc(&crt, &ntsc);
-    crt_draw(&crt, noise);
+    ntsc.hue = hue;
+    if (field == 0) {
+        /* a frame is two fields */
+        fno++;
+        fno &= 1;
+    }
 #endif
+    crt_modulate(&crt, &ntsc);
+    crt_demodulate(&crt, noise);
+    if (!progressive) {
+        field ^= 1;
+    }
     vid_blit();
     vid_sync();
 }
@@ -494,6 +471,7 @@ int
 main(int argc, char **argv)
 {
     int werr;
+    char *input_file;
 
     sys_init();
     sys_updatefunc(updatecb);
@@ -515,12 +493,10 @@ main(int argc, char **argv)
     info = vid_getinfo();
     video = info->video;
 
-#if CRT_NES_MODE
-    crtnes_init(&crt, info->width, info->height, video);
-#else
     crt_init(&crt, info->width, info->height, video);
-#endif
-    char *input_file;
+    crt.blend = 1;
+    crt.scanlines = 1;
+
     if (argc == 1) {
         fprintf(stderr, "Please specify PPM or BMP image input file.\n");
         return EXIT_FAILURE;

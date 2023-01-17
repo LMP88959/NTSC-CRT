@@ -11,6 +11,10 @@ NTSC video signal encoding / decoding emulation by EMMIR 2018-2023
 ### Example of artifact colors creating a rainbow by specially designed art (not my own)
 ![alt text](/rainbow.png?raw=true)
 
+### Example of dot crawl in a standard interlaced NTSC video
+https://user-images.githubusercontent.com/109979235/212872851-38d0558e-b4bb-4011-8090-046e585093c9.mov
+
+
 ### NES mode  
 YouTube video of the filter running in an NES emulator:
 https://www.youtube.com/watch?v=giML77yy7To
@@ -30,26 +34,28 @@ Just like King's Crook (my from-scratch 3D game), this code follows the same res
 6. Single threaded.
 
 This program performs relatively well and can be easily used in real-time applications
-to emulate NTSC output.
+to emulate NTSC output. It is by no means fully optimized (mainly for readability), so  
+there is a lot of room for performance gains.
 
 ================================================================
 Feature List:
 
-- Somewhat realistic/accurate composite NTSC image output  
+- Relatively accurate composite NTSC image output  
   -- with bandlimited luma/chroma  
   -- color artifacts (extends to being able to show specially patterned b/w images as color)  
+  -- accurate dot crawl  
 - VSYNC and HSYNC
 - Signal noise (optional)
 - Interlaced and progressive scan
 - Monochrome and full color
-- Vertically aligned chroma OR checkerboard chroma OR sawtoothed chroma (specified in #define in header)
+- Vertically aligned chroma OR checkerboard chroma OR sawtoothed chroma (specified in #define in crt_core.h)
 - NES decoding support
 
 ## Important
 The command line program provided does not let you mess with all the settings
-like black/white point, brightness, saturation, and contrast.
+like black/white point, hue, brightness, saturation, and contrast.
 
-In the ntsc_crt.c file, there are two main()'s.
+In the crt_main.c file, there are two main()'s.
 One is for a command line program and the other uses my FW library (found here https://github.com/LMP88959/PL3D-KC)
 to provide real-time NTSC emulation with adjustable parameters.
 
@@ -84,11 +90,11 @@ build/ntsc
 The default command line takes a single PPM or BMP image file and outputs a processed PPM or BMP file:
 
 ```
-usage: ./ntsc -m|o|f|p|r|h outwidth outheight noise phase_offset infile outfile
-sample usage: ./ntsc -op 640 480 24 3 in.ppm out.ppm
-sample usage: ./ntsc - 832 624 0 2 in.bmp out.bmp
+usage: ./ntsc -m|o|f|p|r|h outwidth outheight noise artifact_hue infile outfile
+sample usage: ./ntsc -op 640 480 24 0 in.ppm out.ppm
+sample usage: ./ntsc - 832 624 0 90 in.ppm out.ppm
 -- NOTE: the - after the program name is required
-	phase_offset is [0, 1, 2, or 3] +1 means a color phase change of 90 degrees
+	artifact_hue is [0, 359]
 ------------------------------------------------------------
 	m : monochrome
 	o : do not prompt when overwriting files
