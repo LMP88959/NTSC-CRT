@@ -17,6 +17,87 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define USE_LUT 0
+
+#if USE_LUT
+// Precalculate the low and high signal chosen for each 64 base colors
+// with their respective attenuated values
+// https://www.nesdev.org/wiki/NTSC_video#Brightness_Levels
+const int IRE_levels[2][2][0x40]{
+   // waveform low
+   {
+      // normal
+      {
+         // 0x
+         43, -12, -12, -12, -12, -12, -12, -12, -12, -12, -12, -12, -12, -12, 0, 0,
+         // 1x
+         74, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+         // 2x
+         110, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 0, 0,
+         // 3x
+         110, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80, 0, 0
+      },
+      // attenuated
+      {
+         // 0x
+         26 , -17, -17, -17, -17, -17, -17, -17, -17, -17, -17, -17, -17, -17, 0, 0,
+         // 1x
+         51, -8, -8, -8, -8, -8, -8, -8, -8, -8, -8, -8, -8, -8, 0, 0,
+         // 2x
+         82, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 0, 0,
+         // 3x
+         82, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 0, 0
+      }
+   },
+   // waveform high
+   {
+      // normal
+      {
+         // 0x
+         43, 43, 43, 43, 43, 43, 43, 43, 43, 43, 43, 43, 43, -12, 0, 0,
+         // 1x
+         74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 74, 0, 0, 0,
+         // 2x
+         110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 34, 0, 0,
+         // 3x
+         110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 80, 0, 0
+         },
+      // attenuated
+      {
+         // 0x
+         26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, -17, 0, 0,
+         // 1x
+         51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, -8, 0, 0,
+         // 2x
+         82, 82, 82, 82, 82, 82, 82, 82, 82, 82, 82, 82, 82, 19, 0, 0,
+         // 3x
+         82, 82, 82, 82, 82, 82, 82, 82, 82, 82, 82, 82, 82, 56, 0, 0
+      }
+   }
+};
+
+/* generate the square wave for a given 9-bit pixel and phase */
+static int
+square_sample(int p, int phase)
+{
+    static int active[6] = {
+        0300, 0100,
+        0500, 0400,
+        0600, 0200
+    };
+    int hue;
+    bool e, v;
+
+    hue = (p & 0x0f);
+
+    v = (((hue + phase) % 12) < 6);
+
+    /* red 0100, green 0200, blue 0400 */
+    e = ((p & 0700) & active[(phase >> 1) % 6]);
+
+    return IRE_levels[v][e][p & 0x3F];
+}
+#else
 /* generate the square wave for a given 9-bit pixel and phase */
 static int
 square_sample(int p, int phase)
@@ -59,6 +140,7 @@ square_sample(int p, int phase)
 
     return v;
 }
+#endif
 
 #define NES_OPTIMIZED 0
 
