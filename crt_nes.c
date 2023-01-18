@@ -21,18 +21,19 @@
 static int
 square_sample(int p, int phase)
 {
+    /* amplified IRE = ((mV / 7.143) - 312 / 7.143) * 1024 */
     /* https://www.nesdev.org/wiki/NTSC_video#Brightness_Levels */
-    static int IRE[16] = {
-     /* 0d  1d  2d  3d */
-       -12, 0, 34,  80,
-     /* 0d  1d  2d  3d emphasized */
-       -17, -8, 19, 56,
-     /* 00  10  20  30 */
-        43, 74, 110,110,
-     /* 00  10  20  30 emphasized */
-        26, 51, 82, 82
+    static const int IRE[16] = {
+     /* 0d     1d     2d      3d */
+       -12042, 0,     34406,  81427,
+     /* 0d     1d     2d      3d emphasized */
+       -17203,-8028,  19497,  57342,
+     /* 00     10     20      30 */
+        43581, 75693, 112965, 112965,
+     /* 00     10     20      30 emphasized */
+        26951, 52181, 83721,  83721
     };
-    static int active[6] = {
+    static const int active[6] = {
         0300, 0100,
         0500, 0400,
         0600, 0200
@@ -56,7 +57,7 @@ square_sample(int p, int phase)
         case 0x0d: l = 0; break;
         default:   l = v; break;
     }
-    return IRE[(l << 3) + (e << 2) + ((p >> 4) & 3)] << 10;
+    return IRE[(l << 3) + (e << 2) + ((p >> 4) & 3)];
 }
 
 #define NES_OPTIMIZED 0
