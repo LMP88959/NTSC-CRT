@@ -149,7 +149,7 @@ crt_modulate(struct CRT *v, struct NTSC_SETTINGS *s)
             ire += square_sample(p, phase + 1);
             ire += square_sample(p, phase + 2);
             ire += square_sample(p, phase + 3);
-            ire = (ire * (WHITE_LEVEL * v->white_point / 100)) >> 12;
+            ire = (ire * v->white_point / 100) >> 12;
             line[t++] = ire;
             phase += 3;
         }
@@ -191,7 +191,7 @@ crt_modulate(struct CRT *v, struct NTSC_SETTINGS *s)
                 ire += square_sample(p, phase + 1);
                 ire += square_sample(p, phase + 2);
                 ire += square_sample(p, phase + 3);
-                ire = (ire * (WHITE_LEVEL * v->white_point / 100)) >> 12;
+                ire = (ire * v->white_point / 100) >> 12;
                 v->analog[(x + xo) + (y + yo) * CRT_HRES] = ire;
             }
             phase += 3;
@@ -275,7 +275,7 @@ crt_modulate(struct CRT *v, struct NTSC_SETTINGS *s)
                     ire += square_sample(p, phase + 1);
                     ire += square_sample(p, phase + 2);
                     ire += square_sample(p, phase + 3);
-                    ire = (ire * (WHITE_LEVEL * v->white_point / 100)) >> 12;
+                    ire = (ire * v->white_point / 100) >> 12;
                     line[t++] = ire;
                     phase += 3;
                 }
@@ -306,7 +306,7 @@ crt_modulate(struct CRT *v, struct NTSC_SETTINGS *s)
                 ire += square_sample(p, phase + 1);
                 ire += square_sample(p, phase + 2);
                 ire += square_sample(p, phase + 3);
-                ire = (ire * (WHITE_LEVEL * v->white_point / 100)) >> 12;
+                ire = (ire * v->white_point / 100) >> 12;
                 v->analog[(x + xo) + (y + yo) * CRT_HRES] = ire;
             }
             phase += 3;
