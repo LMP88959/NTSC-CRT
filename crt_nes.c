@@ -23,7 +23,7 @@ square_sample(int p, int phase)
 {
     /* amplified IRE = ((mV / 7.143) - 312 / 7.143) * 1024 */
     /* https://www.nesdev.org/wiki/NTSC_video#Brightness_Levels */
-    static const int IRE[16] = {
+    static int IRE[16] = {
      /* 0d     1d     2d      3d */
        -12042, 0,     34406,  81427,
      /* 0d     1d     2d      3d emphasized */
@@ -33,7 +33,7 @@ square_sample(int p, int phase)
      /* 00     10     20      30 emphasized */
         26951, 52181, 83721,  83721
     };
-    static const int active[6] = {
+    static int active[6] = {
         0300, 0100,
         0500, 0400,
         0600, 0200
