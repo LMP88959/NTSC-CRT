@@ -21,43 +21,42 @@
 static int
 square_sample(int p, int phase)
 {
+    /* https://www.nesdev.org/wiki/NTSC_video#Brightness_Levels */
+    static int IRE[16] = {
+     /* 0d  1d  2d  3d */
+       -12, 0, 34,  80,
+     /* 0d  1d  2d  3d emphasized */
+       -17, -8, 19, 56,
+     /* 00  10  20  30 */
+        43, 74, 110,110,
+     /* 00  10  20  30 emphasized */
+        26, 51, 82, 82
+    };
     static int active[6] = {
         0300, 0100,
         0500, 0400,
         0600, 0200
     };
-    int bri, hue, v;
+    int hue;
+    int e, l, v;
 
     hue = (p & 0x0f);
-    
+
     /* last two columns are black */
     if (hue >= 0x0e) {
         return 0;
     }
 
-    bri = ((p & 0x30) >> 4) * 300;
-    
-    switch (hue) {
-        case 0:
-            v = bri + 410;
-            break;
-        case 0x0d:
-            v = bri - 300;
-            break;
-        default:
-            v = (((hue + phase) % 12) < 6) ? (bri + 410) : (bri - 300);
-            break;
-    }
+    v = (((hue + phase) % 12) < 6);
 
-    if (v > 1024) {
-        v = 1024;
-    }
     /* red 0100, green 0200, blue 0400 */
-    if ((p & 0700) & active[(phase >> 1) % 6]) {
-        return (v >> 1) + (v >> 2);
+    e = (((p & 0700) & active[(phase >> 1) % 6]) > 0);
+    switch (hue) {
+        case 0x00: l = 1; break;
+        case 0x0d: l = 0; break;
+        default:   l = v; break;
     }
-
-    return v;
+    return IRE[(l << 3) + (e << 2) + ((p >> 4) & 3)] << 10;
 }
 
 #define NES_OPTIMIZED 0
