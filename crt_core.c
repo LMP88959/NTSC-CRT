@@ -66,6 +66,9 @@ crt_sincos14(int *s, int *c, int n)
 
 /* convolution is much faster but the EQ looks softer, more authentic, and more analog */
 #define USE_CONVOLUTION 0
+#define USE_7_SAMPLE_KERNEL 0
+#define USE_6_SAMPLE_KERNEL 0
+#define USE_5_SAMPLE_KERNEL 1
 
 #if USE_CONVOLUTION
 
@@ -101,9 +104,23 @@ eqf(struct EQF *f, int s)
         h[i] = h[i - 1];
     }
     h[0] = s;
+#if USE_7_SAMPLE
+    /* index : 0 1 2 3 4 5 6 */
+    /* weight: 1 4 7 8 7 4 1 */
+    return (s + h[6] + ((h[1] + h[5]) * 4) + ((h[2] + h[4]) * 7) + (h[3] * 8)) >> 5;
+#elseif USE_6_SAMPLE
+    /* index : 0 1 2 3 4 5 */
+    /* weight: 1 3 4 4 3 1 */
+    return (s + h[5] + 3 * (h[1] + h[4]) + 4 * (h[2] + h[3])) >> 4;
+#elseif USE_5_SAMPLE
     /* index : 0 1 2 3 4 */
     /* weight: 1 2 2 2 1 */
     return (s + h[4] + ((h[1] + h[2] + h[3]) << 1)) >> 3;
+#else
+    /* index : 0 1 2 3 */
+    /* weight: 1 1 1 1*/
+    return (s + h[3] + h[1] + h[2]) >> 2;
+#endif
 }
 
 #else
