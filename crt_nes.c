@@ -148,16 +148,20 @@ crt_modulate(struct CRT *v, struct NTSC_SETTINGS *s)
         sy *= s->w;
         phase += (xo * 3);
         for (x = 0; x < destw; x++) {
-            int ire, p;
-            
-            p = s->data[((x * s->w) / destw) + sy];
-            ire = BLACK_LEVEL + v->black_point;
-            ire += square_sample(p, phase + 0);
-            ire += square_sample(p, phase + 1);
-            ire += square_sample(p, phase + 2);
-            ire += square_sample(p, phase + 3);
-            ire = (ire * (WHITE_LEVEL * v->white_point / 100)) >> 12;
-            v->analog[(x + xo) + (y + yo) * CRT_HRES] = ire;
+            if (y >= 0) {
+                int ire, p;
+                
+                p = s->data[((x * s->w) / destw) + sy];
+                ire = BLACK_LEVEL + v->black_point;
+                ire += square_sample(p, phase + 0);
+                ire += square_sample(p, phase + 1);
+                ire += square_sample(p, phase + 2);
+                ire += square_sample(p, phase + 3);
+                ire = (ire * (WHITE_LEVEL * v->white_point / 100)) >> 12;
+                v->analog[(x + xo) + (y + yo) * CRT_HRES] = ire;
+            } else {
+                v->analog[(x + xo) + (y + yo) * CRT_HRES] = BLACK_LEVEL;
+            }
             phase += 3;
         }
         /* mod here so we don't overflow down the line */
