@@ -28,9 +28,10 @@ cmpsuf(char *s, char *suf, int nc)
     return strcmp(s + strlen(s) - nc, suf);
 }
 
-#if CMD_LINE_VERSION
+#define DRV_HEADER "NTSC/CRT v%d.%d.%d by EMMIR 2018-2023\n",\
+                    CRT_MAJOR, CRT_MINOR, CRT_PATCH
 
-#define DRV_HEADER "NTSC/CRT by EMMIR 2018-2023\n"
+#if CMD_LINE_VERSION
 
 static int dooverwrite = 1;
 static int docolor = 1;
@@ -497,6 +498,8 @@ main(int argc, char **argv)
 
     info = vid_getinfo();
     video = info->video;
+    
+    printf(DRV_HEADER);
 
     crt_init(&crt, info->width, info->height, video);
     crt.blend = 1;
