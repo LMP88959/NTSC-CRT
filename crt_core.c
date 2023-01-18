@@ -64,6 +64,49 @@ crt_sincos14(int *s, int *c, int n)
 /********************************* FILTERS ***********************************/
 /*****************************************************************************/
 
+#define USE_CONVOLUTION 0
+
+#if USE_CONVOLUTION
+
+/* NOT 3 band equalizer, faster convolution instead.
+ * eq function names preserved to keep code clean
+ */
+static struct EQF {
+    int h[5];
+} eqY, eqI, eqQ;
+
+/* params unused to keep the function the same */
+static void
+init_eq(struct EQF *f,
+        int f_lo, int f_hi, int rate,
+        int g_lo, int g_mid, int g_hi)
+{    
+    memset(f, 0, sizeof(struct EQF));
+}
+
+static void
+reset_eq(struct EQF *f)
+{
+    memset(f->h, 0, sizeof(f->h));
+}
+
+static int
+eqf(struct EQF *f, int s)
+{
+    int i;
+    int *h = f->h;
+
+    for (i = 4; i > 0; i--) {
+        h[i] = h[i - 1];
+    }
+    h[0] = s;
+    /* index : 0 1 2 3 4 */
+    /* weight: 1 2 2 2 1 */
+    return (s + h[4] + ((h[1] + h[2] + h[3]) << 1)) >> 3;
+}
+
+#else
+
 #define HISTLEN     3
 #define HISTOLD     (HISTLEN - 1) /* oldest entry */
 #define HISTNEW     0             /* newest entry */
@@ -147,6 +190,8 @@ eqf(struct EQF *f, int s)
     
     return (r[0] + r[1] + r[2]);
 }
+
+#endif
 
 /*****************************************************************************/
 /***************************** PUBLIC FUNCTIONS ******************************/
