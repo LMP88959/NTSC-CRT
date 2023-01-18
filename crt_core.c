@@ -64,6 +64,7 @@ crt_sincos14(int *s, int *c, int n)
 /********************************* FILTERS ***********************************/
 /*****************************************************************************/
 
+/* convolution is much faster but the EQ looks softer, more authentic, and more analog */
 #define USE_CONVOLUTION 0
 
 #if USE_CONVOLUTION
