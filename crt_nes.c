@@ -209,7 +209,7 @@ crt_modulate(struct CRT *v, struct NTSC_SETTINGS *s)
     }
 }
 #else
-
+/* NOT NES_OPTIMIZED */
 extern void
 crt_modulate(struct CRT *v, struct NTSC_SETTINGS *s)
 {
