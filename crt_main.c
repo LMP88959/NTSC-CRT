@@ -402,7 +402,12 @@ updatecb(void)
          * their values resulting in the previous image being
          * displayed where the new, smaller image is not
          */
+#if (CRT_SYSTEM == CRT_SYSTEM_NTSC)
+        /* clearing the analog buffer with optimized NES mode will cause the
+         * image to break since the field does not get repopulated
+         */
         memset(crt.analog, 0, sizeof(crt.analog));
+#endif
         raw ^= 1;
         printf("raw: %d\n", raw);
     }
