@@ -20,6 +20,13 @@ extern "C" {
  * The demodulator. This is also where you can define which system to emulate.
  * 
  */
+    
+/* library version */
+#define CRT_MAJOR 2
+#define CRT_MINOR 0
+#define CRT_PATCH 0
+
+    
 #define CRT_SYSTEM_NTSC 0 /* standard NTSC */
 #define CRT_SYSTEM_NES  1 /* decode 6 or 9-bit NES pixels */
 
