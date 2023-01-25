@@ -67,7 +67,6 @@ ppm_read24(char *file,
         header++;
     }
            
-    maxc++;
     beg = ftell(f);
     npix = *out_w * *out_h;
     *out_color = calloc_func(npix, sizeof(int));
@@ -78,9 +77,10 @@ ppm_read24(char *file,
     out = *out_color;
     /*printf("ppm 24-bit w: %d, h: %d, s: %d\n", *out_w, *out_h, npix);*/
     for (i = 0; i < npix; i++) {
-        r = ((fgetc(f) & 0xff) << 8) / maxc;
-        g = ((fgetc(f) & 0xff) << 8) / maxc;
-        b = ((fgetc(f) & 0xff) << 8) / maxc;
+#define TO_8_BIT(x) (((x) * 255 + (maxc) / 2) / (maxc))
+        r = TO_8_BIT(fgetc(f));
+        g = TO_8_BIT(fgetc(f));
+        b = TO_8_BIT(fgetc(f));
         if (feof(f)) {
             printf("[ppm_rw] early eof: %s\n", file);
             goto err;
