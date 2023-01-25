@@ -39,6 +39,7 @@ static int field = 0;
 static int progressive = 0;
 static int raw = 0;
 static int hue = 0;
+static int save_analog = 0;
 
 static int
 stoint(char *s, int *err)
@@ -66,7 +67,7 @@ static void
 usage(char *p)
 {
     printf(DRV_HEADER);
-    printf("usage: %s -m|o|f|p|r|h outwidth outheight noise artifact_hue infile outfile\n", p);
+    printf("usage: %s -m|o|f|p|r|h|a outwidth outheight noise artifact_hue infile outfile\n", p);
     printf("sample usage: %s -op 640 480 24 0 in.ppm out.ppm\n", p);
     printf("sample usage: %s - 832 624 0 90 in.ppm out.ppm\n", p);
     printf("-- NOTE: the - after the program name is required\n");
@@ -77,6 +78,7 @@ usage(char *p)
     printf("\tf : odd field (only meaningful in progressive mode)\n");
     printf("\tp : progressive scan (rather than interlaced)\n");
     printf("\tr : raw image (needed for images that use artifact colors)\n");
+    printf("\ta : save analog signal as image instead of decoded image\n");
     printf("\th : print help\n");
     printf("\n");
     printf("by default, the image will be full color, interlaced, and scaled to the output dimensions\n");
@@ -98,6 +100,7 @@ process_args(int argc, char **argv)
             case 'f': field = 1;       break;
             case 'p': progressive = 1; break;
             case 'r': raw = 1;         break;
+            case 'a': save_analog = 1; break;
             case 'h': usage(argv[0]); return 0;
             default:
                 fprintf(stderr, "Unrecognized flag '%c'\n", *flags);
@@ -244,6 +247,19 @@ main(int argc, char **argv)
             }
         }
         err++;
+    }
+        
+    if (save_analog) {
+        int i, norm;
+        
+        free(output);
+        output = calloc(CRT_HRES * CRT_VRES, sizeof(int));
+        for (i = 0; i < (CRT_HRES * CRT_VRES); i++) {
+            norm = crt.analog[i] + 128;
+            output[i] = norm << 16 | norm << 8 | norm;
+        }
+        outw = CRT_HRES;
+        outh = CRT_VRES;
     }
     
     if (cmpsuf(output_file, ".ppm", 4) == 0) {
