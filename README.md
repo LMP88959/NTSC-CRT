@@ -90,7 +90,7 @@ build/ntsc
 The default command line takes a single PPM or BMP image file and outputs a processed PPM or BMP file:
 
 ```
-usage: ./ntsc -m|o|f|p|r|h outwidth outheight noise artifact_hue infile outfile
+usage: ./ntsc -m|o|f|p|r|h|a outwidth outheight noise artifact_hue infile outfile
 sample usage: ./ntsc -op 640 480 24 0 in.ppm out.ppm
 sample usage: ./ntsc - 832 624 0 90 in.ppm out.ppm
 -- NOTE: the - after the program name is required
@@ -101,6 +101,7 @@ sample usage: ./ntsc - 832 624 0 90 in.ppm out.ppm
 	f : odd field (only meaningful in progressive mode)
 	p : progressive scan (rather than interlaced)
 	r : raw image (needed for images that use artifact colors)
+	a : save analog signal as image instead of decoded image
 	h : print help
 
 by default, the image will be full color, interlaced, and scaled to the output dimensions
