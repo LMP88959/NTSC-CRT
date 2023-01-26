@@ -242,8 +242,7 @@ main(int argc, char **argv)
             crt_demodulate(&crt, noise);
             if ((err & 1) == 0) {
                 /* a frame is two fields */
-                ntsc.frame++;
-                ntsc.frame &= 1;
+                ntsc.frame ^= 1;
             }
         }
         err++;
@@ -299,7 +298,6 @@ static int noise = 12;
 static int field = 0;
 static int progressive = 0;
 static int raw = 0;
-static int fno = 0; /* frame number */
 static int hue = 0;
 static int fadephos = 1; /* fade phosphors each frame */
 
@@ -464,7 +462,7 @@ displaycb(void)
     ntsc.border_color = 0x22;
     ntsc.w = 256;
     ntsc.h = 240;
-    ntsc.dot_crawl_offset = fno++ % 3;
+    ntsc.dot_crawl_offset = (ntsc.dot_crawl_offset + 1) % 3;
     ntsc.hue = hue;
 #else
     ntsc.rgb = img;
@@ -474,10 +472,9 @@ displaycb(void)
     ntsc.field = field & 1;
     ntsc.raw = raw;
     ntsc.hue = hue;
-    if (field == 0) {
+    if (ntsc.field == 0) {
         /* a frame is two fields */
-        fno++;
-        fno &= 1;
+        ntsc.frame ^= 1;
     }
 #endif
     crt_modulate(&crt, &ntsc);
