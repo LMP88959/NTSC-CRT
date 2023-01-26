@@ -8,8 +8,8 @@
  *   Discord: https://discord.com/invite/hdYctSmyQJ
  */
 /*****************************************************************************/
-#ifndef _CRT_H_
-#define _CRT_H_
+#ifndef _CRT_NTSC_H_
+#define _CRT_NTSC_H_
 
 #ifdef __cplusplus
 extern "C" {
