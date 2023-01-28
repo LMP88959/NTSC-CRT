@@ -115,6 +115,48 @@ cmake --build build
 build/ntsc my.ppm
 ```
 
+### Adding NTSC-CRT to your C/C++ project:
+
+Global variables:
+```c
+#include "crt_core.h"
+
+static struct CRT crt;
+static struct NTSC_SETTINGS ntsc;
+static int color = 1;
+static int noise = 12;
+static int field = 0;
+static int raw = 0;
+static int hue = 0;
+```
+
+In your initialization function:
+```c
+/* pass it the buffer to be drawn on screen */
+crt_init(&crt, screen_width, screen_height, screen_buffer);
+/* specify some settings */
+crt.blend = 1;
+crt.scanlines = 1;
+
+```
+
+In your drawing loop:
+```c
+ntsc.rgb = video_buffer; /* buffer from your rendering */
+ntsc.w = video_width;
+ntsc.h = video_height;
+ntsc.as_color = color;
+ntsc.field = field & 1;
+ntsc.raw = raw;
+ntsc.hue = hue;
+if (ntsc.field == 0) {
+  ntsc.frame ^= 1;
+}
+crt_modulate(&crt, &ntsc);
+crt_demodulate(&crt, noise);
+field ^= 1;
+```
+
 ### Other Information
 Web version by @binji (might not be up to date):  
 https://binji.github.io/NTSC-CRT/  
