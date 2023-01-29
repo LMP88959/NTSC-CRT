@@ -377,7 +377,7 @@ vsync_found:
         ypos = POSMOD(line + v->vsync + ynudge, CRT_VRES);
         pos = xpos + ypos * CRT_HRES;
         
-        ccr = v->ccf[ypos & 3];
+        ccr = v->ccf[ypos % v->cc_period];
         sig = v->inp + ln + (v->hsync & ~3); /* burst @ 1/CB_FREQ sample rate */
         for (i = CB_BEG; i < CB_BEG + (CB_CYCLES * CRT_CB_FREQ); i++) {
             int p, n;

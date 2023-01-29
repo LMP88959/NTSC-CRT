@@ -24,7 +24,7 @@ extern "C" {
 /* library version */
 #define CRT_MAJOR 2
 #define CRT_MINOR 0
-#define CRT_PATCH 0
+#define CRT_PATCH 1
 
     
 #define CRT_SYSTEM_NTSC 0 /* standard NTSC */
@@ -60,6 +60,7 @@ struct CRT {
     
     /* internal data */
     int ccf[4][4]; /* faster color carrier convergence */
+    int cc_period; /* vertically */
     int hsync, vsync; /* keep track of sync over frames */
     int rn; /* seed for the 'random' noise */
 };

@@ -288,5 +288,6 @@ crt_modulate(struct CRT *v, struct NTSC_SETTINGS *s)
             v->ccf[n][x] = iccf[x] << 7;
         }
     }
+    v->cc_period = 4;
 }
 #endif
