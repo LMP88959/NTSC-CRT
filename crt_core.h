@@ -60,6 +60,7 @@ struct CRT {
     
     /* internal data */
     int ccf[4][4]; /* faster color carrier convergence */
+    int cc_period; /* vertically */
     int hsync, vsync; /* keep track of sync over frames */
     int rn; /* seed for the 'random' noise */
 };
