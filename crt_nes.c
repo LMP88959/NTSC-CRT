@@ -60,7 +60,13 @@ square_sample(int p, int phase)
     return IRE[(l << 3) + (e << 2) + ((p >> 4) & 3)];
 }
 
-#define NES_OPTIMIZED 0
+#define NES_OPTIMIZED 1
+/* toggle drawing of NES border
+ * (normally not in visible region, but it depends on your emulator)
+ * highly recommended to keep disabled for better performance if the border
+ * is not visible in your emulator.
+ */
+#define NES_BORDER    0
 
 /* the optimized version is NOT the most optimized version, it just performs
  * some simple refactoring to prevent a few redundant computations
@@ -129,6 +135,7 @@ crt_modulate(struct CRT *v, struct NTSC_SETTINGS *s)
     /* align signal */
     xo = (xo & ~3);
     
+#if NES_BORDER
     for (n = CRT_TOP; n <= (CRT_BOT + 2); n++) {
         int t; /* time */
         signed char *line = &v->analog[n * CRT_HRES];
@@ -151,7 +158,7 @@ crt_modulate(struct CRT *v, struct NTSC_SETTINGS *s)
             phase += 3;
         }
     }
-
+#endif
     for (y = 0; y < desth; y++) {
         signed char *line;  
         int t, cb;
@@ -245,6 +252,7 @@ crt_modulate(struct CRT *v, struct NTSC_SETTINGS *s)
                 iccf[n % 3][t & 3] = line[t];
             }
             while (t < LAV_BEG) line[t++] = BLANK_LEVEL;
+#if NES_BORDER
             if (n >= CRT_TOP && n <= (CRT_BOT + 2)) {
                 phase = phasetab[(n + s->dot_crawl_offset) % 3] + 6;
                 while (t < CRT_HRES) {
@@ -261,8 +269,11 @@ crt_modulate(struct CRT *v, struct NTSC_SETTINGS *s)
                     phase += 3;
                 }
             } else {
+#endif
                 while (t < CRT_HRES) line[t++] = BLANK_LEVEL;
+#if NES_BORDER
             }
+#endif
         }
     }
 
