@@ -76,7 +76,7 @@ crt_sincos14(int *s, int *c, int n)
  * eq function names preserved to keep code clean
  */
 static struct EQF {
-    int h[5];
+    int h[7];
 } eqY, eqI, eqQ;
 
 /* params unused to keep the function the same */
@@ -100,7 +100,7 @@ eqf(struct EQF *f, int s)
     int i;
     int *h = f->h;
 
-    for (i = 4; i > 0; i--) {
+    for (i = 6; i > 0; i--) {
         h[i] = h[i - 1];
     }
     h[0] = s;
