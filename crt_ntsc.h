@@ -110,6 +110,8 @@ struct NTSC_SETTINGS {
     int field;      /* 0 = even, 1 = odd */
     int frame;      /* 0 = even, 1 = odd */
     int hue;        /* 0-359 */
+    int xoffset;    /* x offset in sample space. 0 is minimum value */
+    int yoffset;    /* y offset in # of lines. 0 is minimum value */
 };
 
 #ifdef __cplusplus
