@@ -157,12 +157,15 @@ crt_modulate(&crt, &ntsc);
 crt_demodulate(&crt, noise);
 field ^= 1;
 ```
-
+------
 ### Other Information
 Web version by @binji (might not be up to date):  
 https://binji.github.io/NTSC-CRT/  
 To use the web version, drag a PPM image into the web browser.
+#### Related projects (by other developers)
+https://github.com/svofski/CRT - PAL/SECAM modem in Python/GLSL by @svofski
 
+------
 If you have any questions feel free to leave a comment on YouTube OR
 join the King's Crook Discord server :)
 
