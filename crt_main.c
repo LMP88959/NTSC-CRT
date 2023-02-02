@@ -215,9 +215,10 @@ main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    crt_init(&crt, outw, outh, output);
+    crt_init(&crt, outw, outh, CRT_PIX_FORMAT_RGBA, output);
 
-    ntsc.rgb = img;
+    ntsc.data = img;
+    ntsc.format = CRT_PIX_FORMAT_RGBA;
     ntsc.w = imgw;
     ntsc.h = imgh;
     ntsc.as_color = docolor;
@@ -465,7 +466,8 @@ displaycb(void)
     ntsc.dot_crawl_offset = (ntsc.dot_crawl_offset + 1) % 3;
     ntsc.hue = hue;
 #else
-    ntsc.rgb = img;
+    ntsc.data = img;
+    ntsc.format = CRT_PIX_FORMAT_RGBA;
     ntsc.w = imgw;
     ntsc.h = imgh;
     ntsc.as_color = color;
@@ -514,7 +516,7 @@ main(int argc, char **argv)
     
     printf(DRV_HEADER);
 
-    crt_init(&crt, info->width, info->height, video);
+    crt_init(&crt, info->width, info->height, CRT_PIX_FORMAT_RGBA, video);
     crt.blend = 1;
     crt.scanlines = 1;
 

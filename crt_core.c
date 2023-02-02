@@ -60,6 +60,23 @@ crt_sincos14(int *s, int *c, int n)
     }
 }
 
+extern int
+crt_bpp4fmt(int format)
+{
+    switch (format) {
+        case CRT_PIX_FORMAT_RGB: 
+        case CRT_PIX_FORMAT_BGR: 
+            return 3;
+        case CRT_PIX_FORMAT_ARGB:
+        case CRT_PIX_FORMAT_RGBA:
+        case CRT_PIX_FORMAT_ABGR:
+        case CRT_PIX_FORMAT_BGRA:
+            return 4;
+        default:
+            return 0;
+    }
+}
+
 /*****************************************************************************/
 /********************************* FILTERS ***********************************/
 /*****************************************************************************/
@@ -216,10 +233,11 @@ eqf(struct EQF *f, int s)
 /*****************************************************************************/
 
 extern void
-crt_resize(struct CRT *v, int w, int h, int *out)
+crt_resize(struct CRT *v, int w, int h, int f, unsigned char *out)
 {    
     v->outw = w;
     v->outh = h;
+    v->out_format = f;
     v->out = out;
 }
 
@@ -237,10 +255,10 @@ crt_reset(struct CRT *v)
 }
 
 extern void
-crt_init(struct CRT *v, int w, int h, int *out)
+crt_init(struct CRT *v, int w, int h, int f, unsigned char *out)
 {
     memset(v, 0, sizeof(struct CRT));
-    crt_resize(v, w, h, out);
+    crt_resize(v, w, h, f, out);
     crt_reset(v);
     v->rn = 194;
     
@@ -273,10 +291,17 @@ crt_demodulate(struct CRT *v, int noise)
     int huesn, huecs;
     int xnudge = -3, ynudge = 3;
     int bright = v->brightness - (BLACK_LEVEL + v->black_point);
+    int bpp, pitch;
 #if CRT_DO_BLOOM
     int prev_e; /* filtered beam energy per scan line */
     int max_e; /* approx maximum energy in a scan line */
 #endif
+    
+    bpp = crt_bpp4fmt(v->out_format);
+    if (bpp == 0) {
+        return;
+    }
+    pitch = v->outw * bpp;
     
     crt_sincos14(&huesn, &huecs, ((v->hue % 360) + 33) * 8192 / 180);
     huesn >>= 11; /* make 4-bit */
@@ -339,7 +364,7 @@ vsync_found:
         unsigned pos, ln;
         int scanL, scanR, dx;
         int L, R;
-        int *cL, *cR;
+        unsigned char *cL, *cR;
         int wave[4];
         int dci, dcq; /* decoded I, Q */
         int xpos, ypos;
@@ -431,8 +456,8 @@ vsync_found:
             out[i].q = eqf(&eqQ, sig[i] * wave[(i + 3) & 3] >> 9) >> 3;
         }
 
-        cL = v->out + beg * v->outw;
-        cR = cL + v->outw;
+        cL = v->out + (beg * pitch);
+        cR = cL + pitch;
 
         for (pos = scanL; pos < scanR && cL < cR; pos += dx) {
             int y, i, q;
@@ -462,21 +487,69 @@ vsync_found:
             if (r > 255) r = 255;
             if (g > 255) g = 255;
             if (b > 255) b = 255;
-            
+
             if (v->blend) {
                 aa = (r << 16 | g << 8 | b);
-                bb = *cL;
+
+                switch (v->out_format) {
+                    case CRT_PIX_FORMAT_RGB:
+                    case CRT_PIX_FORMAT_RGBA:
+                        bb = cL[0] << 16 | cL[1] << 8 | cL[2];
+                        break;
+                    case CRT_PIX_FORMAT_BGR: 
+                    case CRT_PIX_FORMAT_BGRA:
+                        bb = cL[2] << 16 | cL[1] << 8 | cL[0];
+                        break;
+                    case CRT_PIX_FORMAT_ARGB:
+                        bb = cL[1] << 16 | cL[2] << 8 | cL[3];
+                        break;
+                    case CRT_PIX_FORMAT_ABGR:
+                        bb = cL[3] << 16 | cL[2] << 8 | cL[1];
+                        break;
+                    default:
+                        bb = 0;
+                        break;
+                }
+
                 /* blend with previous color there */
-                *cL++ = (((aa & 0xfefeff) >> 1) + ((bb & 0xfefeff) >> 1));
+                bb = (((aa & 0xfefeff) >> 1) + ((bb & 0xfefeff) >> 1));
             } else {
-                *cL++ = (r << 16 | g << 8 | b);
+                bb = (r << 16 | g << 8 | b);
             }
+
+            switch (v->out_format) {
+                case CRT_PIX_FORMAT_RGB:
+                case CRT_PIX_FORMAT_RGBA:
+                    cL[0] = bb >> 16 & 0xff;
+                    cL[1] = bb >>  8 & 0xff;
+                    cL[2] = bb >>  0 & 0xff;
+                    break;
+                case CRT_PIX_FORMAT_BGR: 
+                case CRT_PIX_FORMAT_BGRA:
+                    cL[0] = bb >>  0 & 0xff;
+                    cL[1] = bb >>  8 & 0xff;
+                    cL[2] = bb >> 16 & 0xff;
+                    break;
+                case CRT_PIX_FORMAT_ARGB:
+                    cL[1] = bb >> 16 & 0xff;
+                    cL[2] = bb >>  8 & 0xff;
+                    cL[3] = bb >>  0 & 0xff;
+                    break;
+                case CRT_PIX_FORMAT_ABGR:
+                    cL[1] = bb >>  0 & 0xff;
+                    cL[2] = bb >>  8 & 0xff;
+                    cL[3] = bb >> 16 & 0xff;
+                    break;
+                default:
+                    break;
+            }
+
+            cL += bpp;
         }
         
         /* duplicate extra lines */
-        ln = v->outw * sizeof(int);
         for (s = beg + 1; s < (end - v->scanlines); s++) {
-            memcpy(v->out + s * v->outw, v->out + (s - 1) * v->outw, ln);
+            memcpy(v->out + s * pitch, v->out + (s - 1) * pitch, pitch);
         }
     }
 }

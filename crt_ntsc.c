@@ -136,6 +136,7 @@ crt_modulate(struct CRT *v, struct NTSC_SETTINGS *s)
     int ccburst[4]; /* color phase for burst */
     int sn, cs, n, ph;
     int inv_phase = 0;
+    int bpp;
     static int iir_inited = 0;
     if (!iir_inited) {
         init_iir(&iirY, L_FREQ, Y_FREQ);
@@ -180,6 +181,11 @@ crt_modulate(struct CRT *v, struct NTSC_SETTINGS *s)
     } else {
         memset(ccburst, 0, sizeof(ccburst));
         memset(ccmod, 0, sizeof(ccmod));
+    }
+    
+    bpp = crt_bpp4fmt(s->format);
+    if (bpp == 0) {
+        return; /* just to be safe */
     }
     xo = AV_BEG  + 4 + (AV_LEN    - destw) / 2;
     yo = CRT_TOP + 2 + (CRT_LINES - desth) / 2;
@@ -259,13 +265,38 @@ crt_modulate(struct CRT *v, struct NTSC_SETTINGS *s)
         
         for (x = 0; x < destw; x++) {
             int fy, fi, fq;
-            int pA, rA, gA, bA;
+            int rA, gA, bA;
+            const unsigned char *pix;
             int ire; /* composite signal */
 
-            pA = s->rgb[((x * s->w) / destw) + sy];
-            rA = (pA >> 16) & 0xff;
-            gA = (pA >>  8) & 0xff;
-            bA = (pA >>  0) & 0xff;
+            pix = s->data + ((((x * s->w) / destw) + sy) * bpp);
+            switch (s->format) {
+                case CRT_PIX_FORMAT_RGB:
+                case CRT_PIX_FORMAT_RGBA:
+                    rA = pix[0];
+                    gA = pix[1];
+                    bA = pix[2];
+                    break;
+                case CRT_PIX_FORMAT_BGR: 
+                case CRT_PIX_FORMAT_BGRA:
+                    rA = pix[2];
+                    gA = pix[1];
+                    bA = pix[0];
+                    break;
+                case CRT_PIX_FORMAT_ARGB:
+                    rA = pix[1];
+                    gA = pix[2];
+                    bA = pix[3];
+                    break;
+                case CRT_PIX_FORMAT_ABGR:
+                    rA = pix[3];
+                    gA = pix[2];
+                    bA = pix[1];
+                    break;
+                default:
+                    rA = gA = bA = 0;
+                    break;
+            }
 
             /* RGB to YIQ */
             fy = (19595 * rA + 38470 * gA +  7471 * bA) >> 14;

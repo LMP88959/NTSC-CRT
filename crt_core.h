@@ -23,8 +23,8 @@ extern "C" {
     
 /* library version */
 #define CRT_MAJOR 2
-#define CRT_MINOR 0
-#define CRT_PATCH 1
+#define CRT_MINOR 1
+#define CRT_PATCH 0
 
     
 #define CRT_SYSTEM_NTSC 0 /* standard NTSC */
@@ -41,6 +41,14 @@ extern "C" {
 #error No system defined
 #endif
 
+/* NOTE: this library does not use the alpha channel at all */
+#define CRT_PIX_FORMAT_RGB  0  /* 3 bytes per pixel [R,G,B,R,G,B,R,G,B...] */
+#define CRT_PIX_FORMAT_BGR  1  /* 3 bytes per pixel [B,G,R,B,G,R,B,G,R...] */
+#define CRT_PIX_FORMAT_ARGB 2  /* 4 bytes per pixel [A,R,G,B,A,R,G,B...]   */
+#define CRT_PIX_FORMAT_RGBA 3  /* 4 bytes per pixel [R,G,B,A,R,G,B,A...]   */
+#define CRT_PIX_FORMAT_ABGR 4  /* 4 bytes per pixel [A,B,G,R,A,B,G,R...]   */
+#define CRT_PIX_FORMAT_BGRA 5  /* 4 bytes per pixel [B,G,R,A,B,G,R,A...]   */
+
 /* do bloom emulation (side effect: makes screen have black borders) */
 #define CRT_DO_BLOOM    0  /* does not work for NES */
 #define CRT_DO_VSYNC    1  /* look for VSYNC */
@@ -51,7 +59,8 @@ struct CRT {
     signed char inp[CRT_INPUT_SIZE]; /* CRT input, can be noisy */
 
     int outw, outh; /* output width/height */
-    int *out; /* output image */
+    int out_format; /* output pixel format (one of the CRT_PIX_FORMATs) */
+    unsigned char *out; /* output image */
 
     int hue, brightness, contrast, saturation; /* common monitor settings */
     int black_point, white_point; /* user-adjustable */
@@ -68,16 +77,18 @@ struct CRT {
 /* Initializes the library. Sets up filters.
  *   w   - width of the output image
  *   h   - height of the output image
- *   out - pointer to output image data 32-bit RGB packed as 0xXXRRGGBB
+ *   f   - format of the output image
+ *   out - pointer to output image data
  */
-extern void crt_init(struct CRT *v, int w, int h, int *out);
+extern void crt_init(struct CRT *v, int w, int h, int f, unsigned char *out);
 
 /* Updates the output image parameters
  *   w   - width of the output image
  *   h   - height of the output image
- *   out - pointer to output image data 32-bit RGB packed as 0xXXRRGGBB
+ *   f   - format of the output image
+ *   out - pointer to output image data
  */
-extern void crt_resize(struct CRT *v, int w, int h, int *out);
+extern void crt_resize(struct CRT *v, int w, int h, int f, unsigned char *out);
 
 /* Resets the CRT settings back to their defaults */
 extern void crt_reset(struct CRT *v);
@@ -91,6 +102,14 @@ extern void crt_modulate(struct CRT *v, struct NTSC_SETTINGS *s);
  *   noise - the amount of noise added to the signal (0 - inf)
  */
 extern void crt_demodulate(struct CRT *v, int noise);
+
+/* Get the bytes per pixel for a certain CRT_PIX_FORMAT_
+ * 
+ *   format - the format to get the bytes per pixel for
+ *   
+ * returns 0 if the specified format does not exist
+ */
+extern int crt_bpp4fmt(int format);
 
 /*****************************************************************************/
 /*************************** FIXED POINT SIN/COS *****************************/
