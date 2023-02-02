@@ -24,7 +24,7 @@ extern "C" {
 /* library version */
 #define CRT_MAJOR 2
 #define CRT_MINOR 1
-#define CRT_PATCH 1
+#define CRT_PATCH 2
 
     
 #define CRT_SYSTEM_NTSC 0 /* standard NTSC */
@@ -66,7 +66,8 @@ struct CRT {
     int black_point, white_point; /* user-adjustable */
     int scanlines; /* leave gaps between lines if necessary */
     int blend; /* blend new field onto previous image */
-    
+    unsigned v_fac; /* factor to stretch img vertically onto the output img */
+
     /* internal data */
     int ccf[4][4]; /* faster color carrier convergence */
     int cc_period; /* vertically */
