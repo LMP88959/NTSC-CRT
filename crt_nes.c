@@ -124,7 +124,7 @@ crt_modulate(struct CRT *v, struct NTSC_SETTINGS *s)
     for (y = 0; y < 3; y++) {
         xo = (y + s->dot_crawl_offset) * 120;
         for (x = 0; x < 4; x++) {
-            n = (s->hue + x * 90 + xo - 90 + 33) % 360;
+            n = (s->hue + x * 90 + xo + 33) % 360;
             crt_sincos14(&sn, &cs, n * 8192 / 180);
             ccburst[y][x] = sn >> 10;
         }
