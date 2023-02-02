@@ -102,7 +102,8 @@ extern "C" {
 #endif
 
 struct NTSC_SETTINGS {
-    const int *rgb; /* 32-bit RGB image data (packed as 0xXXRRGGBB) */
+    const unsigned char *data; /* image data */
+    int format;     /* pix format (one of the CRT_PIX_FORMATs in crt_core.h) */
     int w, h;       /* width and height of image */
     int raw;        /* 0 = scale image to fit monitor, 1 = don't scale */
     int as_color;   /* 0 = monochrome, 1 = full color */
