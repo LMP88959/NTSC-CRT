@@ -548,9 +548,8 @@ vsync_found:
         }
         
         /* duplicate extra lines */
-        ln = v->outw * bpp;
         for (s = beg + 1; s < (end - v->scanlines); s++) {
-            memcpy(v->out + s * ln, v->out + (s - 1) * ln, ln);
+            memcpy(v->out + s * pitch, v->out + (s - 1) * pitch, pitch);
         }
     }
 }
