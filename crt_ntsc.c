@@ -187,8 +187,8 @@ crt_modulate(struct CRT *v, struct NTSC_SETTINGS *s)
     if (bpp == 0) {
         return; /* just to be safe */
     }
-    xo = AV_BEG  + 4 + (AV_LEN    - destw) / 2;
-    yo = CRT_TOP + 2 + (CRT_LINES - desth) / 2;
+    xo = AV_BEG  + s->xoffset + (AV_LEN    - destw) / 2;
+    yo = CRT_TOP + s->yoffset + (CRT_LINES - desth) / 2;
     
     s->field &= 1;
     s->frame &= 1;
