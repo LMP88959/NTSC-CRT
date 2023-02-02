@@ -373,9 +373,9 @@ vsync_found:
 #if CRT_DO_BLOOM
         int line_w;
 #endif
-        
-        beg = (line - CRT_TOP + 0) * v->outh / CRT_LINES + field;
-        end = (line - CRT_TOP + 1) * v->outh / CRT_LINES + field;
+  
+        beg = (line - CRT_TOP + 0) * (v->outh + v->v_fac) / CRT_LINES + field;
+        end = (line - CRT_TOP + 1) * (v->outh + v->v_fac) / CRT_LINES + field;
 
         if (beg >= v->outh) { continue; }
         if (end > v->outh) { end = v->outh; }
