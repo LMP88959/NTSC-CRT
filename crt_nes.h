@@ -123,7 +123,7 @@ struct NTSC_SETTINGS {
     /* NOTE: NES mode is always progressive */
     int hue;              /* 0-359 */
     /* make sure your NTSC_SETTINGS struct is zeroed out before you do anything */
-    int fields_initialized; /* internal state */
+    int field_initialized; /* internal state */
 };
 
 #ifdef __cplusplus
