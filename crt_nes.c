@@ -193,7 +193,7 @@ crt_modulate(struct CRT *v, struct NTSC_SETTINGS *s)
     }
     
     for (x = 0; x < 4; x++) {
-        for (n = 0; n < 4; n++) {
+        for (n = 0; n < 3; n++) {
             v->ccf[n][x] = iccf[n][x & 3] << 7;
         }
     }
@@ -299,7 +299,7 @@ crt_modulate(struct CRT *v, struct NTSC_SETTINGS *s)
     }
     
     for (x = 0; x < 4; x++) {
-        for (n = 0; n < 4; n++) {
+        for (n = 0; n < 3; n++) {
             v->ccf[n][x] = iccf[n][x & 3] << 7;
         }
     }
