@@ -122,6 +122,8 @@ struct NTSC_SETTINGS {
     int dot_crawl_offset; /* 0, 1, or 2 */
     /* NOTE: NES mode is always progressive */
     int hue;              /* 0-359 */
+    /* make sure your NTSC_SETTINGS struct is zeroed out before you do anything */
+    int fields_initialized; /* internal state */
 };
 
 #ifdef __cplusplus
