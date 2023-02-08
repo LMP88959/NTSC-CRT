@@ -137,12 +137,12 @@ crt_modulate(struct CRT *v, struct NTSC_SETTINGS *s)
     int sn, cs, n, ph;
     int inv_phase = 0;
     int bpp;
-    static int iir_inited = 0;
-    if (!iir_inited) {
+
+    if (!s->iirs_initialized) {
         init_iir(&iirY, L_FREQ, Y_FREQ);
         init_iir(&iirI, L_FREQ, I_FREQ);
         init_iir(&iirQ, L_FREQ, Q_FREQ);
-        iir_inited = 1;
+        s->iirs_initialized = 1;
     }
 #if CRT_DO_BLOOM
     if (s->raw) {
