@@ -106,7 +106,6 @@ setup_field(struct CRT *v)
 extern void
 crt_modulate(struct CRT *v, struct NTSC_SETTINGS *s)
 {
-    static int init = 0;
     int x, y, xo, yo;
     int destw = AV_LEN;
     int desth = CRT_LINES;
@@ -115,10 +114,10 @@ crt_modulate(struct CRT *v, struct NTSC_SETTINGS *s)
     int ccburst[3][4]; /* color phase for burst */
     int sn, cs;
     static int phasetab[4] = { 0, 4, 8 };
-    
-    if (!init) {
+        
+    if (!s->field_initialized) {
         setup_field(v);
-        init = 1;
+        s->field_initialized = 1;
     }
 
     for (y = 0; y < 3; y++) {
