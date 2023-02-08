@@ -112,6 +112,8 @@ struct NTSC_SETTINGS {
     int hue;        /* 0-359 */
     int xoffset;    /* x offset in sample space. 0 is minimum value */
     int yoffset;    /* y offset in # of lines. 0 is minimum value */
+    /* make sure your NTSC_SETTINGS struct is zeroed out before you do anything */
+    int iirs_initialized; /* internal state */
 };
 
 #ifdef __cplusplus
