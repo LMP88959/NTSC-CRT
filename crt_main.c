@@ -467,7 +467,7 @@ displaycb(void)
     ntsc.hue = hue;
 #else
     ntsc.data = img;
-    ntsc.format = CRT_PIX_FORMAT_RGBA;
+    ntsc.format = CRT_PIX_FORMAT_BGRA;
     ntsc.w = imgw;
     ntsc.h = imgh;
     ntsc.as_color = color;
@@ -516,7 +516,7 @@ main(int argc, char **argv)
     
     printf(DRV_HEADER);
 
-    crt_init(&crt, info->width, info->height, CRT_PIX_FORMAT_RGBA, video);
+    crt_init(&crt, info->width, info->height, CRT_PIX_FORMAT_BGRA, video);
     crt.blend = 1;
     crt.scanlines = 1;
 
