@@ -24,7 +24,7 @@ extern "C" {
 /* library version */
 #define CRT_MAJOR 2
 #define CRT_MINOR 1
-#define CRT_PATCH 4
+#define CRT_PATCH 5
 
     
 #define CRT_SYSTEM_NTSC 0 /* standard NTSC */
