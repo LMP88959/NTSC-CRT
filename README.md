@@ -133,7 +133,7 @@ static int hue = 0;
 In your initialization function:
 ```c
 /* pass it the buffer to be drawn on screen */
-crt_init(&crt, screen_width, screen_height, CRT_PIX_FORMAT_RGBA, screen_buffer);
+crt_init(&crt, screen_width, screen_height, CRT_PIX_FORMAT_BGRA, screen_buffer);
 /* specify some settings */
 crt.blend = 1;
 crt.scanlines = 1;
@@ -143,7 +143,7 @@ crt.scanlines = 1;
 In your drawing loop:
 ```c
 ntsc.data = video_buffer; /* buffer from your rendering */
-ntsc.format = CRT_PIX_FORMAT_RGBA;
+ntsc.format = CRT_PIX_FORMAT_BGRA;
 ntsc.w = video_width;
 ntsc.h = video_height;
 ntsc.as_color = color;
