@@ -94,13 +94,6 @@ extern "C" {
 #define BLANK_LEVEL      0
 #define SYNC_LEVEL      -40
 
-#if (CRT_CHROMA_PATTERN == 1)
-/* 227.5 subcarrier cycles per line means every other line has reversed phase */
-#define CC_PHASE(ln)     (((ln) & 1) ? -1 : 1)
-#else
-#define CC_PHASE(ln)     (1)
-#endif
-
 struct NTSC_SETTINGS {
     const unsigned char *data; /* image data */
     int format;     /* pix format (one of the CRT_PIX_FORMATs in crt_core.h) */
