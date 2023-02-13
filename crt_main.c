@@ -215,7 +215,7 @@ main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    crt_init(&crt, outw, outh, CRT_PIX_FORMAT_RGBA, output);
+    crt_init(&crt, outw, outh, CRT_PIX_FORMAT_BGRA, output);
 
     ntsc.data = img;
     ntsc.format = CRT_PIX_FORMAT_RGBA;
