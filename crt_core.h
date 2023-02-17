@@ -126,4 +126,4 @@ extern void crt_sincos14(int *s, int *c, int n);
 }
 #endif
 
-#endif /* _CRT_SINCOS_H_ */
+#endif
