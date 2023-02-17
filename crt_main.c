@@ -218,7 +218,7 @@ main(int argc, char **argv)
     crt_init(&crt, outw, outh, CRT_PIX_FORMAT_BGRA, output);
 
     ntsc.data = img;
-    ntsc.format = CRT_PIX_FORMAT_RGBA;
+    ntsc.format = CRT_PIX_FORMAT_BGRA;
     ntsc.w = imgw;
     ntsc.h = imgh;
     ntsc.as_color = docolor;
