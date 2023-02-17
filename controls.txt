@@ -10,8 +10,6 @@ r - reset CRT settings (hue, brightness, saturation, contrast, black point, whit
 f - toggle between even and odd fields
 e - toggle between progressive and interlaced mode
 t - (in non-NES mode) toggle raw display mode
-p - cycle through 90 degree phase offsets (for color artifacting)
-o - unlocked phase cycling (like pressing p every frame)
 m - toggle fading phosphors
 g - toggle scanlines (if needed)
 b - toggle field blending
