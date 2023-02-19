@@ -128,8 +128,9 @@ crt_modulate(struct CRT *v, struct NTSC_SETTINGS *s)
             ccburst[y][x] = sn >> 10;
         }
     }
-    xo = AV_BEG;
-    yo = CRT_TOP;
+
+    xo = AV_BEG  + s->xoffset;
+    yo = CRT_TOP + s->yoffset;
          
     /* align signal */
     xo = (xo & ~3);
@@ -221,9 +222,10 @@ crt_modulate(struct CRT *v, struct NTSC_SETTINGS *s)
             ccburst[y][x] = sn >> 10;
         }
     }
-    xo = AV_BEG;
-    yo = CRT_TOP;
-         
+
+    xo = AV_BEG  + s->xoffset;
+    yo = CRT_TOP + s->yoffset;
+     
     /* align signal */
     xo = (xo & ~3);
     
