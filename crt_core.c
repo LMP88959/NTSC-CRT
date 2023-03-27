@@ -121,15 +121,15 @@ eqf(struct EQF *f, int s)
         h[i] = h[i - 1];
     }
     h[0] = s;
-#if USE_7_SAMPLE
+#if USE_7_SAMPLE_KERNEL
     /* index : 0 1 2 3 4 5 6 */
     /* weight: 1 4 7 8 7 4 1 */
     return (s + h[6] + ((h[1] + h[5]) * 4) + ((h[2] + h[4]) * 7) + (h[3] * 8)) >> 5;
-#elif USE_6_SAMPLE
+#elif USE_6_SAMPLE_KERNEL
     /* index : 0 1 2 3 4 5 */
     /* weight: 1 3 4 4 3 1 */
     return (s + h[5] + 3 * (h[1] + h[4]) + 4 * (h[2] + h[3])) >> 4;
-#elif USE_5_SAMPLE
+#elif USE_5_SAMPLE_KERNEL
     /* index : 0 1 2 3 4 */
     /* weight: 1 2 2 2 1 */
     return (s + h[4] + ((h[1] + h[2] + h[3]) << 1)) >> 3;
