@@ -51,6 +51,8 @@ extern "C" {
 #define CRT_BOT         255    /* final line with active video */
 #define CRT_LINES       (CRT_BOT - CRT_TOP) /* number of active video lines */
 
+#define CRT_CC_SAMPLES  4 /* samples per chroma period (samples per 360 deg) */
+
 /* NES composite signal is measured in terms of PPU pixels, or cycles
  * https://www.nesdev.org/wiki/NTSC_video#Scanline_Timing
  *
