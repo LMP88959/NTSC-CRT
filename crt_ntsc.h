@@ -41,6 +41,8 @@ extern "C" {
 #define CRT_TOP         21     /* first line with active video */
 #define CRT_BOT         261    /* final line with active video */
 #define CRT_LINES       (CRT_BOT - CRT_TOP) /* number of active video lines */
+    
+#define CRT_CC_SAMPLES  4 /* samples per chroma period (samples per 360 deg) */
 
 /*
  *                      FULL HORIZONTAL LINE SIGNAL (~63500 ns)
