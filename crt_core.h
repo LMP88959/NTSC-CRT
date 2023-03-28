@@ -24,11 +24,12 @@ extern "C" {
 /* library version */
 #define CRT_MAJOR 2
 #define CRT_MINOR 1
-#define CRT_PATCH 6
+#define CRT_PATCH 7
 
     
 #define CRT_SYSTEM_NTSC 0 /* standard NTSC */
 #define CRT_SYSTEM_NES  1 /* decode 6 or 9-bit NES pixels */
+#define CRT_SYSTEM_PV1K 2 /* Casio PV-1000 */
 
 /* the system to be compiled */
 #define CRT_SYSTEM CRT_SYSTEM_NTSC
@@ -37,6 +38,8 @@ extern "C" {
 #include "crt_nes.h"
 #elif (CRT_SYSTEM == CRT_SYSTEM_NTSC)
 #include "crt_ntsc.h"
+#elif (CRT_SYSTEM == CRT_SYSTEM_PV1K)
+#include "crt_pv1k.h"
 #else
 #error No system defined
 #endif
@@ -69,8 +72,7 @@ struct CRT {
     unsigned v_fac; /* factor to stretch img vertically onto the output img */
 
     /* internal data */
-    int ccf[4][4]; /* faster color carrier convergence */
-    int cc_period; /* vertically */
+    int ccf[CRT_CC_VPER][CRT_CC_SAMPLES]; /* faster color carrier convergence */
     int hsync, vsync; /* keep track of sync over frames */
     int rn; /* seed for the 'random' noise */
 };
