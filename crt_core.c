@@ -83,9 +83,15 @@ crt_bpp4fmt(int format)
 
 /* convolution is much faster but the EQ looks softer, more authentic, and more analog */
 #define USE_CONVOLUTION 0
-#define USE_7_SAMPLE_KERNEL 0
+#define USE_7_SAMPLE_KERNEL 1
 #define USE_6_SAMPLE_KERNEL 0
-#define USE_5_SAMPLE_KERNEL 1
+#define USE_5_SAMPLE_KERNEL 0
+
+#if (CRT_CC_SAMPLES != 4)
+/* the current convolutions do not filter properly at > 4 samples */
+#undef USE_CONVOLUTION
+#define USE_CONVOLUTION 0
+#endif
 
 #if USE_CONVOLUTION
 
@@ -268,9 +274,18 @@ crt_init(struct CRT *v, int w, int h, int f, unsigned char *out)
     /* band gains are pre-scaled as 16-bit fixed point
      * if you change the EQ_P define, you'll need to update these gains too
      */
-    init_eq(&eqY, kHz2L(1500), kHz2L(3000), CRT_HRES, 65536, 8192, 9175);
+#if (CRT_CC_SAMPLES == 4)
+    init_eq(&eqY, kHz2L(1500), kHz2L(3000), CRT_HRES, 65536, 8192, 9175);  
     init_eq(&eqI, kHz2L(80),   kHz2L(1150), CRT_HRES, 65536, 65536, 1311);
     init_eq(&eqQ, kHz2L(80),   kHz2L(1000), CRT_HRES, 65536, 65536, 0);
+#elif (CRT_CC_SAMPLES == 5)
+    init_eq(&eqY, kHz2L(1500), kHz2L(3000), CRT_HRES, 65536, 12192, 7775);
+    init_eq(&eqI, kHz2L(80),   kHz2L(1150), CRT_HRES, 65536, 65536, 1311);
+    init_eq(&eqQ, kHz2L(80),   kHz2L(1000), CRT_HRES, 65536, 65536, 0);
+#else
+#error "NTSC-CRT currently only supports 4 or 5 samples per chroma period."
+#endif
+
 }
 
 /* search windows, in samples */
@@ -280,7 +295,8 @@ crt_init(struct CRT *v, int w, int h, int f, unsigned char *out)
 extern void
 crt_demodulate(struct CRT *v, int noise)
 {
-    struct {
+    /* made static so all this data does not go on the stack */
+    static struct {
         int y, i, q;
     } out[AV_LEN + 1], *yiqA, *yiqB;
     int i, j, line, rn;
@@ -365,7 +381,12 @@ vsync_found:
         int scanL, scanR, dx;
         int L, R;
         unsigned char *cL, *cR;
-        int wave[4];
+#if (CRT_CC_SAMPLES == 4)
+        int wave[CRT_CC_SAMPLES];
+#else
+        int waveI[CRT_CC_SAMPLES];
+        int waveQ[CRT_CC_SAMPLES];
+#endif
         int dci, dcq; /* decoded I, Q */
         int xpos, ypos;
         int beg, end;
@@ -402,27 +423,61 @@ vsync_found:
         ypos = POSMOD(line + v->vsync + ynudge, CRT_VRES);
         pos = xpos + ypos * CRT_HRES;
         
-        ccr = v->ccf[ypos % v->cc_period];
-        sig = v->inp + ln + (v->hsync & ~3); /* burst @ 1/CB_FREQ sample rate */
+        ccr = v->ccf[ypos % CRT_CC_VPER];
+#if (CRT_CC_SAMPLES == 4)
+        sig = v->inp + ln + (v->hsync & ~3); /* faster */
+#else
+        sig = v->inp + ln + (v->hsync - (v->hsync % CRT_CC_SAMPLES));
+#endif
         for (i = CB_BEG; i < CB_BEG + (CB_CYCLES * CRT_CB_FREQ); i++) {
             int p, n;
-            p = ccr[i & 3] * 127 / 128; /* fraction of the previous */
+            p = ccr[i % CRT_CC_SAMPLES] * 127 / 128; /* fraction of the previous */
             n = sig[i];                 /* mixed with the new sample */
-            ccr[i & 3] = p + n;
+            ccr[i % CRT_CC_SAMPLES] = p + n;
         }
- 
-        phasealign = POSMOD(v->hsync, 4);
 
+        phasealign = POSMOD(v->hsync, CRT_CC_SAMPLES);
+        
+#if (CRT_CC_SAMPLES == 4)
         /* amplitude of carrier = saturation, phase difference = hue */
         dci = ccr[(phasealign + 1) & 3] - ccr[(phasealign + 3) & 3];
         dcq = ccr[(phasealign + 2) & 3] - ccr[(phasealign + 0) & 3];
 
-        /* rotate them by the hue adjustment angle */
         wave[0] = ((dci * huecs - dcq * huesn) >> 4) * v->saturation;
         wave[1] = ((dcq * huecs + dci * huesn) >> 4) * v->saturation;
         wave[2] = -wave[0];
         wave[3] = -wave[1];
-        
+#elif (CRT_CC_SAMPLES == 5)
+        {
+            int dciA, dciB;
+            int dcqA, dcqB;
+            int ang = (v->hue % 360);
+            int off180 = CRT_CC_SAMPLES / 2;
+            int off90 = CRT_CC_SAMPLES / 4;
+            int peakA = phasealign + off90;
+            int peakB = phasealign + 0;
+            dciA = dciB = dcqA = dcqB = 0;
+            /* amplitude of carrier = saturation, phase difference = hue */
+            dciA = ccr[(peakA) % CRT_CC_SAMPLES];
+            /* average */
+            dciB = (ccr[(peakA + off180) % CRT_CC_SAMPLES]
+                  + ccr[(peakA + off180 + 1) % CRT_CC_SAMPLES]) / 2;
+            dcqA = ccr[(peakB + off180) % CRT_CC_SAMPLES];
+            dcqB = ccr[(peakB) % CRT_CC_SAMPLES];
+            dci = dciA - dciB;
+            dcq = dcqA - dcqB;
+            /* create wave tables and rotate them by the hue adjustment angle */
+            for (i = 0; i < CRT_CC_SAMPLES; i++) {
+                int sn, cs;
+                crt_sincos14(&sn, &cs, ang * 8192 / 180);
+                waveI[i] = ((dci * cs + dcq * sn) >> 15) * v->saturation;
+                /* Q is offset by 90 */
+                crt_sincos14(&sn, &cs, (ang + 90) * 8192 / 180);
+                waveQ[i] = ((dci * cs + dcq * sn) >> 15) * v->saturation;
+                ang += (360 / CRT_CC_SAMPLES);
+            }
+        }
+#endif
         sig = v->inp + pos;
 #if CRT_DO_BLOOM
         s = 0;
@@ -450,11 +505,19 @@ vsync_found:
         reset_eq(&eqI);
         reset_eq(&eqQ);
         
+#if (CRT_CC_SAMPLES == 4)
         for (i = L; i < R; i++) {
             out[i].y = eqf(&eqY, sig[i] + bright) << 4;
             out[i].i = eqf(&eqI, sig[i] * wave[(i + 0) & 3] >> 9) >> 3;
             out[i].q = eqf(&eqQ, sig[i] * wave[(i + 3) & 3] >> 9) >> 3;
         }
+#else
+        for (i = L; i < R; i++) {
+            out[i].y = eqf(&eqY, sig[i] + bright) << 4;
+            out[i].i = eqf(&eqI, sig[i] * waveI[i % CRT_CC_SAMPLES] >> 9) >> 3;
+            out[i].q = eqf(&eqQ, sig[i] * waveQ[i % CRT_CC_SAMPLES] >> 9) >> 3;
+        } 
+#endif
 
         cL = v->out + (beg * pitch);
         cR = cL + pitch;

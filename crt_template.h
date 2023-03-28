@@ -8,29 +8,35 @@
  *   Discord: https://discord.com/invite/hdYctSmyQJ
  */
 /*****************************************************************************/
-#ifndef _CRT_NTSC_H_
-#define _CRT_NTSC_H_
+#ifndef _CRT_TEMP_H_
+#define _CRT_TEMP_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* crt_ntsc.h
+/* crt_template.h
  *
- * An interface to convert a digital image to an analog NTSC signal.
+ * Your description here.
  * 
  */
-/* 0 = vertical  chroma (228 chroma clocks per line) */
-/* 1 = checkered chroma (227.5 chroma clocks per line) */
-#define CRT_CHROMA_PATTERN 1
 
-/* chroma clocks (subcarrier cycles) per line */
-#if (CRT_CHROMA_PATTERN == 1)
+/* NOTE: to add this to the main library, simply add it to the list at the 
+ * top of crt_core.h and add its header include as another elif clause,
+ * that's it!
+ */
+
+/* define number of chroma cycles per line
+ * (scaled by 10, e.g 228 would be 228, 227.5 would be 2275)
+ * 
+ * if defining a fractional number of cycles, it would make sense to then
+ * modify CRT_CC_VPER to reflect that.
+ * For example,
+ * 228.0  would repeat every line,
+ * 227.5  would repeat every 2 lines,
+ * 227.33 would repeat every 3, etc.
+ */
 #define CRT_CC_LINE 2275
-#else
-/* this will give the 'rainbow' effect in the famous waterfall scene */
-#define CRT_CC_LINE 2280
-#endif
 
 /* NOTE, in general, increasing CRT_CB_FREQ reduces blur and bleed */
 #define CRT_CB_FREQ     4 /* carrier frequency relative to sample rate */
@@ -41,11 +47,11 @@ extern "C" {
 #define CRT_TOP         21     /* first line with active video */
 #define CRT_BOT         261    /* final line with active video */
 #define CRT_LINES       (CRT_BOT - CRT_TOP) /* number of active video lines */
-    
-#define CRT_CC_SAMPLES  4 /* samples per chroma period (samples per 360 deg) */
-#define CRT_CC_VPER     1 /* vertical period in which the artifacts repeat */
 
-/* search windows, in samples */
+#define CRT_CC_SAMPLES  4 /* samples per chroma period (samples per 360 deg) */
+#define CRT_CC_VPER     2 /* vertical period in which the artifacts repeat */
+
+/* search windows, hsync is in terms of samples, vsync is lines */
 #define CRT_HSYNC_WINDOW 8
 #define CRT_VSYNC_WINDOW 8
 
@@ -95,19 +101,51 @@ extern "C" {
 /* somewhere between 7 and 12 cycles */
 #define CB_CYCLES   10
 
+
+#define CRT_DO_BANDLIMITING 1    /* enable/disable bandlimiting when encoding */
 /* frequencies for bandlimiting */
 #define L_FREQ           1431818 /* full line */
-#define Y_FREQ           420000  /* Luma   (Y) 4.2  MHz of the 14.31818 MHz */
-#define I_FREQ           150000  /* Chroma (I) 1.5  MHz of the 14.31818 MHz */
-#define Q_FREQ           55000   /* Chroma (Q) 0.55 MHz of the 14.31818 MHz */
+#define Y_FREQ           420000  /* Luma   (Y) 4.2  MHz */
+#define I_FREQ           150000  /* Chroma (I) 1.5  MHz */
+#define Q_FREQ           55000   /* Chroma (Q) 0.55 MHz */
 
-/* IRE units (100 = 1.0V, -40 = 0.0V) */
+/* IRE units (100 = 1.0V, -40 = 0.0V)
+ * IRE is used because it fits nicely in an 8-bit signed char
+ */
 #define WHITE_LEVEL      100
 #define BURST_LEVEL      20
 #define BLACK_LEVEL      7
 #define BLANK_LEVEL      0
 #define SYNC_LEVEL      -40
+#define IRE_MAX          110   /* max value is max value of signed char */
+#define IRE_MIN          0     /* min value is min value of signed char */
 
+/* how much Q's phase is offset relative to I.
+ * Should generally be 90 degrees, however, changing
+ * variables like CRT_CB_FREQ and CRT_CC_SAMPLES can
+ * cause its sign to change from + to - or vice versa.
+ * If you notice the SMPTE bars having colors in the wrong order even
+ * when the right hue is set, then this might be what you need to change.
+ */
+#define Q_OFFSET  (-90)   /* in degrees */
+
+/* burst hue offset */
+#define HUE_OFFSET (-60)  /* in degrees */
+
+/* define line ranges in which sync is generated
+ * the numbers are inclusive
+ * Make sure these numbers fit in (0, CRT_VRES)
+ */
+#define SYNC_REGION_LO 3
+#define SYNC_REGION_HI 6
+/* same as above but for equalizing pulses */
+#define EQU_REGION_A_LO 0
+#define EQU_REGION_A_HI 2
+
+#define EQU_REGION_B_LO 7
+#define EQU_REGION_B_HI 9
+
+/* your NTSC_SETTINGS struct, add or remove data as you see fit */
 struct NTSC_SETTINGS {
     const unsigned char *data; /* image data */
     int format;     /* pix format (one of the CRT_PIX_FORMATs in crt_core.h) */
@@ -119,6 +157,7 @@ struct NTSC_SETTINGS {
     int hue;        /* 0-359 */
     int xoffset;    /* x offset in sample space. 0 is minimum value */
     int yoffset;    /* y offset in # of lines. 0 is minimum value */
+    int dot_crawl_offset; /* 0-5 */
     /* make sure your NTSC_SETTINGS struct is zeroed out before you do anything */
     int iirs_initialized; /* internal state */
 };

@@ -8,32 +8,23 @@
  *   Discord: https://discord.com/invite/hdYctSmyQJ
  */
 /*****************************************************************************/
-#ifndef _CRT_NTSC_H_
-#define _CRT_NTSC_H_
+#ifndef _CRT_PV1K_H_
+#define _CRT_PV1K_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* crt_ntsc.h
+/* crt_pv1k.h
  *
- * An interface to convert a digital image to an analog NTSC signal.
+ * An interface to convert a digital image to an analog NTSC signal in a
+ * fashion similar to a Casio PV-1000.
  * 
  */
-/* 0 = vertical  chroma (228 chroma clocks per line) */
-/* 1 = checkered chroma (227.5 chroma clocks per line) */
-#define CRT_CHROMA_PATTERN 1
-
-/* chroma clocks (subcarrier cycles) per line */
-#if (CRT_CHROMA_PATTERN == 1)
-#define CRT_CC_LINE 2275
-#else
-/* this will give the 'rainbow' effect in the famous waterfall scene */
-#define CRT_CC_LINE 2280
-#endif
+#define CRT_CC_LINE 2304
 
 /* NOTE, in general, increasing CRT_CB_FREQ reduces blur and bleed */
-#define CRT_CB_FREQ     4 /* carrier frequency relative to sample rate */
+#define CRT_CB_FREQ     5 /* carrier frequency relative to sample rate */
 #define CRT_HRES        (CRT_CC_LINE * CRT_CB_FREQ / 10) /* horizontal res */
 #define CRT_VRES        262                       /* vertical resolution */
 #define CRT_INPUT_SIZE  (CRT_HRES * CRT_VRES)
@@ -41,11 +32,11 @@ extern "C" {
 #define CRT_TOP         21     /* first line with active video */
 #define CRT_BOT         261    /* final line with active video */
 #define CRT_LINES       (CRT_BOT - CRT_TOP) /* number of active video lines */
-    
-#define CRT_CC_SAMPLES  4 /* samples per chroma period (samples per 360 deg) */
-#define CRT_CC_VPER     1 /* vertical period in which the artifacts repeat */
 
-/* search windows, in samples */
+#define CRT_CC_SAMPLES  5 /* samples per chroma period (samples per 360 deg) */
+#define CRT_CC_VPER     5 /* vertical period in which the artifacts repeat */
+
+/* search windows, hsync is in terms of samples, vsync is lines */
 #define CRT_HSYNC_WINDOW 8
 #define CRT_VSYNC_WINDOW 8
 
@@ -97,9 +88,9 @@ extern "C" {
 
 /* frequencies for bandlimiting */
 #define L_FREQ           1431818 /* full line */
-#define Y_FREQ           420000  /* Luma   (Y) 4.2  MHz of the 14.31818 MHz */
-#define I_FREQ           150000  /* Chroma (I) 1.5  MHz of the 14.31818 MHz */
-#define Q_FREQ           55000   /* Chroma (Q) 0.55 MHz of the 14.31818 MHz */
+#define Y_FREQ           420000  /* Luma   (Y) 4.2  MHz */
+#define I_FREQ           150000  /* Chroma (I) 1.5  MHz */
+#define Q_FREQ           55000   /* Chroma (Q) 0.55 MHz */
 
 /* IRE units (100 = 1.0V, -40 = 0.0V) */
 #define WHITE_LEVEL      100
@@ -119,6 +110,7 @@ struct NTSC_SETTINGS {
     int hue;        /* 0-359 */
     int xoffset;    /* x offset in sample space. 0 is minimum value */
     int yoffset;    /* y offset in # of lines. 0 is minimum value */
+    int dot_crawl_offset; /* 0-5 */
     /* make sure your NTSC_SETTINGS struct is zeroed out before you do anything */
     int iirs_initialized; /* internal state */
 };

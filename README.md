@@ -48,7 +48,7 @@ there is a lot of room for performance gains.
 - Signal noise (optional)
 - Interlaced and progressive scan
 - Monochrome and full color
-- Vertically aligned chroma OR checkerboard chroma OR sawtoothed chroma (specified in #define in crt_core.h)
+- Highly customizable signal encoding (see crt_template.h to make your own)
 - NES decoding support
 
 ## Important
@@ -158,6 +158,13 @@ crt_demodulate(&crt, noise);
 field ^= 1;
 ```
 ------
+## Writing a port for a certain system
+
+Check out crt_template.h and crt_template.c  
+Most modifications should only be to the constants defined in crt_template.h
+
+------
+
 ### Other Information
 Web version by @binji (might not be up to date):  
 https://binji.github.io/NTSC-CRT/  

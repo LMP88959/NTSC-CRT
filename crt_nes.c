@@ -110,20 +110,20 @@ crt_modulate(struct CRT *v, struct NTSC_SETTINGS *s)
     int destw = AV_LEN;
     int desth = CRT_LINES;
     int n, phase;
-    int iccf[3][4];
-    int ccburst[3][4]; /* color phase for burst */
+    int iccf[CRT_CC_VPER][CRT_CC_SAMPLES];
+    int ccburst[CRT_CC_VPER][CRT_CC_SAMPLES]; /* color phase for burst */
     int sn, cs;
-    static int phasetab[4] = { 0, 4, 8 };
+    static int phasetab[CRT_CC_VPER] = { 0, 4, 8 };
         
     if (!s->field_initialized) {
         setup_field(v);
         s->field_initialized = 1;
     }
 
-    for (y = 0; y < 3; y++) {
-        xo = (y + s->dot_crawl_offset) * 120;
-        for (x = 0; x < 4; x++) {
-            n = (s->hue + x * 90 + xo + 33) % 360;
+    for (y = 0; y < CRT_CC_VPER; y++) {
+        xo = (y + s->dot_crawl_offset) * (360 / CRT_CC_VPER);
+        for (x = 0; x < CRT_CC_SAMPLES; x++) {
+            n = (s->hue + x * (360 / CRT_CC_SAMPLES) + xo + 33) % 360;
             crt_sincos14(&sn, &cs, n * 8192 / 180);
             ccburst[y][x] = sn >> 10;
         }
@@ -142,7 +142,7 @@ crt_modulate(struct CRT *v, struct NTSC_SETTINGS *s)
         
         t = LINE_BEG;
  
-        phase = phasetab[(n + s->dot_crawl_offset) % 3] + 6;
+        phase = phasetab[(n + s->dot_crawl_offset) % CRT_CC_VPER] + 6;
         t = LAV_BEG;
         while (t < CRT_HRES) {
             int ire, p;
@@ -172,12 +172,12 @@ crt_modulate(struct CRT *v, struct NTSC_SETTINGS *s)
         
         /* CB_CYCLES of color burst at 3.579545 Mhz */
         for (t = CB_BEG; t < CB_BEG + (CB_CYCLES * CRT_CB_FREQ); t++) {
-            cb = ccburst[n % 3][t & 3];
+            cb = ccburst[n % CRT_CC_VPER][t % CRT_CC_SAMPLES];
             line[t] = (BLANK_LEVEL + (cb * BURST_LEVEL)) >> 5;
-            iccf[n % 3][t & 3] = line[t];
+            iccf[n % CRT_CC_VPER][t % CRT_CC_SAMPLES] = line[t];
         }
         sy *= s->w;
-        phase = phasetab[(y + yo + s->dot_crawl_offset) % 3];
+        phase = phasetab[(y + yo + s->dot_crawl_offset) % CRT_CC_VPER];
         for (x = 0; x < destw; x++) {
             int ire, p;
             
@@ -193,12 +193,11 @@ crt_modulate(struct CRT *v, struct NTSC_SETTINGS *s)
         }
     }
     
-    for (x = 0; x < 4; x++) {
-        for (n = 0; n < 3; n++) {
-            v->ccf[n][x] = iccf[n][x & 3] << 7;
+    for (n = 0; n < CRT_CC_VPER; n++) {
+        for (x = 0; x < CRT_CC_SAMPLES; x++) {
+            v->ccf[n][x] = iccf[n][x] << 7;
         }
     }
-    v->cc_period = 3;
 }
 #else
 /* NOT NES_OPTIMIZED */
@@ -209,15 +208,15 @@ crt_modulate(struct CRT *v, struct NTSC_SETTINGS *s)
     int destw = AV_LEN;
     int desth = CRT_LINES;
     int n, phase;
-    int iccf[3][4];
-    int ccburst[3][4]; /* color phase for burst */
+    int iccf[CRT_CC_VPER][CRT_CC_SAMPLES];
+    int ccburst[CRT_CC_VPER][CRT_CC_SAMPLES]; /* color phase for burst */
     int sn, cs;
-    static int phasetab[4] = { 0, 4, 8 };
+    static int phasetab[CRT_CC_VPER] = { 0, 4, 8 };
 
-    for (y = 0; y < 3; y++) {
-        xo = (y + s->dot_crawl_offset) * 120;
-        for (x = 0; x < 4; x++) {
-            n = (s->hue + x * 90 + xo + 33) % 360;
+    for (y = 0; y < CRT_CC_VPER; y++) {
+        xo = (y + s->dot_crawl_offset) * (360 / CRT_CC_VPER);
+        for (x = 0; x < CRT_CC_SAMPLES; x++) {
+            n = (s->hue + x * (360 / CRT_CC_SAMPLES) + xo + 33) % 360;
             crt_sincos14(&sn, &cs, n * 8192 / 180);
             ccburst[y][x] = sn >> 10;
         }
@@ -248,14 +247,14 @@ crt_modulate(struct CRT *v, struct NTSC_SETTINGS *s)
             while (t < CB_BEG) line[t++] = BLANK_LEVEL; /* BW + CB + BP */
             /* CB_CYCLES of color burst at 3.579545 Mhz */
             for (t = CB_BEG; t < CB_BEG + (CB_CYCLES * CRT_CB_FREQ); t++) {
-                cb = ccburst[n % 3][t & 3];
+                cb = ccburst[n % CRT_CC_VPER][t % CRT_CC_SAMPLES];
                 line[t] = (BLANK_LEVEL + (cb * BURST_LEVEL)) >> 5;
-                iccf[n % 3][t & 3] = line[t];
+                iccf[n % CRT_CC_VPER][t % CRT_CC_SAMPLES] = line[t];
             }
             while (t < LAV_BEG) line[t++] = BLANK_LEVEL;
 #if NES_BORDER
             if (n >= CRT_TOP && n <= (CRT_BOT + 2)) {
-                phase = phasetab[(n + s->dot_crawl_offset) % 3] + 6;
+                phase = phasetab[(n + s->dot_crawl_offset) % CRT_CC_VPER] + 6;
                 while (t < CRT_HRES) {
                     int ire, p;
                     p = s->border_color;
@@ -284,7 +283,7 @@ crt_modulate(struct CRT *v, struct NTSC_SETTINGS *s)
         if (sy < 0) sy = 0;
         
         sy *= s->w;
-        phase = phasetab[(y + yo + s->dot_crawl_offset) % 3];
+        phase = phasetab[(y + yo + s->dot_crawl_offset) % CRT_CC_VPER];
         for (x = 0; x < destw; x++) {
             int ire, p;
             
@@ -300,12 +299,11 @@ crt_modulate(struct CRT *v, struct NTSC_SETTINGS *s)
         }
     }
     
-    for (x = 0; x < 4; x++) {
-        for (n = 0; n < 3; n++) {
-            v->ccf[n][x] = iccf[n][x & 3] << 7;
+    for (n = 0; n < CRT_CC_VPER; n++) {
+        for (x = 0; x < CRT_CC_SAMPLES; x++) {
+            v->ccf[n][x] = iccf[n][x] << 7;
         }
     }
-    v->cc_period = 3;
 }
 #endif
 
