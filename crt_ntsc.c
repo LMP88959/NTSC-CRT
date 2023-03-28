@@ -131,9 +131,10 @@ crt_modulate(struct CRT *v, struct NTSC_SETTINGS *s)
     int x, y, xo, yo;
     int destw = AV_LEN;
     int desth = ((CRT_LINES * 64500) >> 16);
-    int iccf[4];
-    int ccmod[4]; /* color phase for mod */
-    int ccburst[4]; /* color phase for burst */
+    int iccf[CRT_CC_SAMPLES];
+    int ccmodI[CRT_CC_SAMPLES]; /* color phase for mod */
+    int ccmodQ[CRT_CC_SAMPLES]; /* color phase for mod */
+    int ccburst[CRT_CC_SAMPLES]; /* color phase for burst */
     int sn, cs, n, ph;
     int inv_phase = 0;
     int bpp;
@@ -171,16 +172,19 @@ crt_modulate(struct CRT *v, struct NTSC_SETTINGS *s)
     }
 #endif
     if (s->as_color) {
-        for (x = 0; x < 4; x++) {
-            n = s->hue + x * 90;
+        for (x = 0; x < CRT_CC_SAMPLES; x++) {
+            n = s->hue + x * (360 / CRT_CC_SAMPLES);
             crt_sincos14(&sn, &cs, (n + 33) * 8192 / 180);
             ccburst[x] = sn >> 10;
             crt_sincos14(&sn, &cs, n * 8192 / 180);
-            ccmod[x] = sn >> 10;
+            ccmodI[x] = sn >> 10;
+            crt_sincos14(&sn, &cs, (n - 90) * 8192 / 180);
+            ccmodQ[x] = sn >> 10;
         }
     } else {
         memset(ccburst, 0, sizeof(ccburst));
-        memset(ccmod, 0, sizeof(ccmod));
+        memset(ccmodI, 0, sizeof(ccmodI));
+        memset(ccmodQ, 0, sizeof(ccmodQ));
     }
     
     bpp = crt_bpp4fmt(s->format);
@@ -236,12 +240,13 @@ crt_modulate(struct CRT *v, struct NTSC_SETTINGS *s)
             /* CB_CYCLES of color burst at 3.579545 Mhz */
             for (t = CB_BEG; t < CB_BEG + (CB_CYCLES * CRT_CB_FREQ); t++) {
 #if (CRT_CHROMA_PATTERN == 1)
-                cb = ccburst[(t + inv_phase * 2) & 3];
+                int off180 = CRT_CC_SAMPLES / 2;
+                cb = ccburst[(t + inv_phase * off180) % CRT_CC_SAMPLES];
 #else
-                cb = ccburst[t & 3];
+                cb = ccburst[t % CRT_CC_SAMPLES];
 #endif
                 line[t] = (BLANK_LEVEL + (cb * BURST_LEVEL)) >> 5;
-                iccf[t & 3] = line[t];
+                iccf[t % CRT_CC_SAMPLES] = line[t];
             }
         }
     }
@@ -268,7 +273,8 @@ crt_modulate(struct CRT *v, struct NTSC_SETTINGS *s)
             int rA, gA, bA;
             const unsigned char *pix;
             int ire; /* composite signal */
-
+            int xoff;
+            
             pix = s->data + ((((x * s->w) / destw) + sy) * bpp);
             switch (s->format) {
                 case CRT_PIX_FORMAT_RGB:
@@ -303,10 +309,12 @@ crt_modulate(struct CRT *v, struct NTSC_SETTINGS *s)
             fi = (39059 * rA - 18022 * gA - 21103 * bA) >> 14;
             fq = (13894 * rA - 34275 * gA + 20382 * bA) >> 14;
             ire = BLACK_LEVEL + v->black_point;
+            
+            xoff = (x + xo) % CRT_CC_SAMPLES;
             /* bandlimit Y,I,Q */
             fy = iirf(&iirY, fy);
-            fi = iirf(&iirI, fi) * ph * ccmod[(x + 0) & 3] >> 4;
-            fq = iirf(&iirQ, fq) * ph * ccmod[(x + 3) & 3] >> 4;
+            fi = iirf(&iirI, fi) * ph * ccmodI[xoff] >> 4;
+            fq = iirf(&iirQ, fq) * ph * ccmodQ[xoff] >> 4;
             ire += (fy + fi + fq) * (WHITE_LEVEL * v->white_point / 100) >> 10;
             if (ire < 0)   ire = 0;
             if (ire > 110) ire = 110;
@@ -314,11 +322,10 @@ crt_modulate(struct CRT *v, struct NTSC_SETTINGS *s)
             v->analog[(x + xo) + (y + yo) * CRT_HRES] = ire;
         }
     }
-    for (x = 0; x < 4; x++) {
-        for (n = 0; n < 4; n++) {
+    for (n = 0; n < CRT_CC_VPER; n++) {
+        for (x = 0; x < CRT_CC_SAMPLES; x++) {
             v->ccf[n][x] = iccf[x] << 7;
         }
     }
-    v->cc_period = 4;
 }
 #endif
