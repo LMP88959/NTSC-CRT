@@ -45,6 +45,17 @@ extern "C" {
 #define CRT_CC_SAMPLES  4 /* samples per chroma period (samples per 360 deg) */
 #define CRT_CC_VPER     1 /* vertical period in which the artifacts repeat */
 
+/* search windows, in samples */
+#define CRT_HSYNC_WINDOW 8
+#define CRT_VSYNC_WINDOW 8
+
+/* accumulated signal threshold required for sync detection.
+ * Larger = more stable, until it's so large that it is never reached in which
+ *          case the CRT won't be able to sync
+ */
+#define CRT_HSYNC_THRESH 4
+#define CRT_VSYNC_THRESH 94
+
 /*
  *                      FULL HORIZONTAL LINE SIGNAL (~63500 ns)
  * |---------------------------------------------------------------------------|
