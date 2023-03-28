@@ -58,7 +58,7 @@ add_dependencies(fw::fw fw)
 endif()
 
 # --- NTSC program
-add_executable(ntsc crt_core.c crt_ntsc.c crt_nes.c crt_main.c ppm_rw.c bmp_rw.c)
+add_executable(ntsc crt_core.c crt_ntsc.c crt_nes.c crt_pv1k.c crt_main.c ppm_rw.c bmp_rw.c)
 target_include_directories(ntsc PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_definitions(ntsc PRIVATE
 CMD_LINE_VERSION=$<NOT:$<BOOL:${live}>>
