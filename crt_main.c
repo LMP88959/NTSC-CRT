@@ -463,7 +463,7 @@ displaycb(void)
     ntsc.border_color = 0x22;
     ntsc.w = 256;
     ntsc.h = 240;
-    ntsc.dot_crawl_offset = (ntsc.dot_crawl_offset + 1) % 3;
+    ntsc.dot_crawl_offset = (ntsc.dot_crawl_offset + 1) % CRT_CC_VPER;
     ntsc.hue = hue;
 #else
     ntsc.data = img;
@@ -478,6 +478,9 @@ displaycb(void)
         /* a frame is two fields */
         ntsc.frame ^= 1;
     }
+#if (CRT_SYSTEM == CRT_SYSTEM_PV1K)
+    ntsc.dot_crawl_offset = (ntsc.dot_crawl_offset + 1) % CRT_CC_VPER;
+#endif
 #endif
     crt_modulate(&crt, &ntsc);
     crt_demodulate(&crt, noise);
