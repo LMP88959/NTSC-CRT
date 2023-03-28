@@ -54,6 +54,17 @@ extern "C" {
 #define CRT_CC_SAMPLES  4 /* samples per chroma period (samples per 360 deg) */
 #define CRT_CC_VPER     3 /* vertical period in which the artifacts repeat */
 
+/* search windows, in samples */
+#define CRT_HSYNC_WINDOW 6
+#define CRT_VSYNC_WINDOW 6
+
+/* accumulated signal threshold required for sync detection.
+ * Larger = more stable, until it's so large that it is never reached in which
+ *          case the CRT won't be able to sync
+ */
+#define CRT_HSYNC_THRESH 4
+#define CRT_VSYNC_THRESH 94
+
 /* NES composite signal is measured in terms of PPU pixels, or cycles
  * https://www.nesdev.org/wiki/NTSC_video#Scanline_Timing
  *
