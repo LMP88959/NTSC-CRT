@@ -25,7 +25,7 @@ extern "C" {
 
 /* NOTE, in general, increasing CRT_CB_FREQ reduces blur and bleed */
 #define CRT_CB_FREQ     5 /* carrier frequency relative to sample rate */
-#define CRT_HRES        (CRT_CC_LINE * CRT_CB_FREQ / 6) /* horizontal res */
+#define CRT_HRES        (CRT_CC_LINE * CRT_CB_FREQ /6) /* horizontal res */
 #define CRT_VRES        262                       /* vertical resolution */
 #define CRT_INPUT_SIZE  (CRT_HRES * CRT_VRES)
 
@@ -64,8 +64,8 @@ extern "C" {
 #define DOT_ns 223
 #define DOTx4_ns 892
 #define LINE_BEG         0
-#define FP_ns            (2*DOTx4_ns)      /* front porch */
-#define SYNC_ns          (4*DOTx4_ns)      /* sync tip */
+#define FP_ns            (3*DOTx4_ns)      /* front porch */
+#define SYNC_ns          (3*DOTx4_ns)      /* sync tip */
 #define BW_ns            (2*DOTx4_ns)       /* breezeway */
 #define CB_ns            (4*DOTx4_ns)      /* color burst */
 #define BP_ns            (4*DOTx4_ns)      /* back porch */
