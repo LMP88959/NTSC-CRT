@@ -17,7 +17,10 @@
 #include "bmp_rw.h"
 #include "crt_core.h"
 
+#ifndef CMD_LINE_VERSION
 #define CMD_LINE_VERSION 1
+#endif
+
 /* there is no NES command line version */
 #if ((CRT_SYSTEM == CRT_SYSTEM_NES) && CMD_LINE_VERSION)
 #error NES mode does not have a command line version
