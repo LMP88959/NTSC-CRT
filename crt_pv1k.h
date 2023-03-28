@@ -25,7 +25,7 @@ extern "C" {
 
 /* NOTE, in general, increasing CRT_CB_FREQ reduces blur and bleed */
 #define CRT_CB_FREQ     5 /* carrier frequency relative to sample rate */
-#define CRT_HRES        (CRT_CC_LINE * CRT_CB_FREQ /6) /* horizontal res */
+#define CRT_HRES        (CRT_CC_LINE * CRT_CB_FREQ / 6) /* horizontal res */
 #define CRT_VRES        262                       /* vertical resolution */
 #define CRT_INPUT_SIZE  (CRT_HRES * CRT_VRES)
 
