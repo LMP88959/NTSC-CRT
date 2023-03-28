@@ -198,7 +198,6 @@ crt_modulate(struct CRT *v, struct NTSC_SETTINGS *s)
             v->ccf[n][x] = iccf[n][x & 3] << 7;
         }
     }
-    v->cc_period = 3;
 }
 #else
 /* NOT NES_OPTIMIZED */
@@ -305,7 +304,6 @@ crt_modulate(struct CRT *v, struct NTSC_SETTINGS *s)
             v->ccf[n][x] = iccf[n][x & 3] << 7;
         }
     }
-    v->cc_period = 3;
 }
 #endif
 
