@@ -288,10 +288,6 @@ crt_init(struct CRT *v, int w, int h, int f, unsigned char *out)
 
 }
 
-/* search windows, in samples */
-#define HSYNC_WINDOW 6
-#define VSYNC_WINDOW 6
-
 extern void
 crt_demodulate(struct CRT *v, int noise)
 {
@@ -344,7 +340,7 @@ crt_demodulate(struct CRT *v, int noise)
      * The signal needs to be integrated to lessen
      * the noise in the signal.
      */
-    for (i = -VSYNC_WINDOW; i < VSYNC_WINDOW; i++) {
+    for (i = -CRT_VSYNC_WINDOW; i < CRT_VSYNC_WINDOW; i++) {
         line = POSMOD(v->vsync + i, CRT_VRES);
         sig = v->inp + line * CRT_HRES;
         s = 0;
@@ -353,7 +349,7 @@ crt_demodulate(struct CRT *v, int noise)
             /* increase the multiplier to make the vsync
              * more stable when there is a lot of noise
              */
-            if (s <= (94 * SYNC_LEVEL)) {
+            if (s <= (CRT_VSYNC_THRESH * SYNC_LEVEL)) {
                 goto vsync_found;
             }
         }
@@ -407,9 +403,9 @@ vsync_found:
         ln = (POSMOD(line + v->vsync, CRT_VRES)) * CRT_HRES;
         sig = v->inp + ln + v->hsync;
         s = 0;
-        for (i = -HSYNC_WINDOW; i < HSYNC_WINDOW; i++) {
+        for (i = -CRT_HSYNC_WINDOW; i < CRT_HSYNC_WINDOW; i++) {
             s += sig[SYNC_BEG + i];
-            if (s <= (4 * SYNC_LEVEL)) {
+            if (s <= (CRT_HSYNC_THRESH * SYNC_LEVEL)) {
                 break;
             }
         }
