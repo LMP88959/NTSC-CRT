@@ -30,12 +30,15 @@ extern "C" {
 #define CRT_SYSTEM_NTSC 0 /* standard NTSC */
 #define CRT_SYSTEM_NES  1 /* decode 6 or 9-bit NES pixels */
 #define CRT_SYSTEM_PV1K 2 /* Casio PV-1000 */
+#define CRT_SYSTEM_SNES 3 /* SNES - uses RGB */
 
 /* the system to be compiled */
 #define CRT_SYSTEM CRT_SYSTEM_NTSC
 
 #if (CRT_SYSTEM == CRT_SYSTEM_NES)
 #include "crt_nes.h"
+#elif (CRT_SYSTEM == CRT_SYSTEM_SNES)
+#include "crt_snes.h"
 #elif (CRT_SYSTEM == CRT_SYSTEM_NTSC)
 #include "crt_ntsc.h"
 #elif (CRT_SYSTEM == CRT_SYSTEM_PV1K)
