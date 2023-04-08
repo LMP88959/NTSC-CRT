@@ -31,6 +31,7 @@ extern "C" {
 #define CRT_SYSTEM_NES  1 /* decode 6 or 9-bit NES pixels */
 #define CRT_SYSTEM_PV1K 2 /* Casio PV-1000 */
 #define CRT_SYSTEM_SNES 3 /* SNES - uses RGB */
+#define CRT_SYSTEM_TEMP 4 /* template implementation */
 
 /* the system to be compiled */
 #define CRT_SYSTEM CRT_SYSTEM_NTSC
@@ -43,6 +44,8 @@ extern "C" {
 #include "crt_ntsc.h"
 #elif (CRT_SYSTEM == CRT_SYSTEM_PV1K)
 #include "crt_pv1k.h"
+#elif (CRT_SYSTEM == CRT_SYSTEM_TEMP)
+#include "crt_template.h"
 #else
 #error No system defined
 #endif
