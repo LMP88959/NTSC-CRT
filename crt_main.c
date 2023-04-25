@@ -114,7 +114,7 @@ process_args(int argc, char **argv)
 }
 
 static int
-fileexist(char *n)
+file_exist(char *n)
 {
     FILE *fp = fopen(n, "r");
     if (fp) {
@@ -125,9 +125,9 @@ fileexist(char *n)
 }
 
 static int
-promptoverwrite(char *fn)
+prompt_overwrite(char *fn)
 {
-    if (dooverwrite && fileexist(fn)) {
+    if (dooverwrite && file_exist(fn)) {
         do {
             char c = 0;
             printf("\n--- file (%s) already exists, overwrite? (y/n)\n", fn);
@@ -214,7 +214,7 @@ main(int argc, char **argv)
     }
     printf("loaded %d %d\n", imgw, imgh);
 
-    if (!promptoverwrite(output_file)) {
+    if (!prompt_overwrite(output_file)) {
         return EXIT_FAILURE;
     }
 
