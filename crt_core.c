@@ -320,11 +320,26 @@ crt_demodulate(struct CRT *v, int noise)
     huecs >>= 11;
 
     rn = v->rn;
+#if ((CRT_SYSTEM == CRT_SYSTEM_NTSCVHS) && CRT_VHS_NOISE)
+    line = ((rand() % 8) - 4) + 14;
+#endif
     for (i = 0; i < CRT_INPUT_SIZE; i++) {
+        int nn = noise;
+#if ((CRT_SYSTEM == CRT_SYSTEM_NTSCVHS) && CRT_VHS_NOISE)
+        rn = rand();
+        if (i > (CRT_INPUT_SIZE - CRT_HRES * (16 + ((rand() % 20) - 10))) &&
+            i < (CRT_INPUT_SIZE - CRT_HRES * (5 + ((rand() % 8) - 4)))) {
+            int ln, sn, cs;
+            
+            ln = (i * line) / CRT_HRES;
+            crt_sincos14(&sn, &cs, ln * 8192 / 180);
+            nn = cs >> 8;
+        }
+#else
         rn = (214019 * rn + 140327895);
-
+#endif
         /* signal + noise */
-        s = v->analog[i] + (((((rn >> 16) & 0xff) - 0x7f) * noise) >> 8);
+        s = v->analog[i] + (((((rn >> 16) & 0xff) - 0x7f) * nn) >> 8);
         if (s >  127) { s =  127; }
         if (s < -127) { s = -127; }
         v->inp[i] = s;

@@ -24,14 +24,15 @@ extern "C" {
 /* library version */
 #define CRT_MAJOR 2
 #define CRT_MINOR 2
-#define CRT_PATCH 0
+#define CRT_PATCH 1
 
     
-#define CRT_SYSTEM_NTSC 0 /* standard NTSC */
-#define CRT_SYSTEM_NES  1 /* decode 6 or 9-bit NES pixels */
-#define CRT_SYSTEM_PV1K 2 /* Casio PV-1000 */
-#define CRT_SYSTEM_SNES 3 /* SNES - uses RGB */
-#define CRT_SYSTEM_TEMP 4 /* template implementation */
+#define CRT_SYSTEM_NTSC     0 /* standard NTSC */
+#define CRT_SYSTEM_NES      1 /* decode 6 or 9-bit NES pixels */
+#define CRT_SYSTEM_PV1K     2 /* Casio PV-1000 */
+#define CRT_SYSTEM_SNES     3 /* SNES - uses RGB */
+#define CRT_SYSTEM_TEMP     4 /* template implementation */
+#define CRT_SYSTEM_NTSCVHS  5 /* standard NTSC VHS */
 
 /* the system to be compiled */
 #define CRT_SYSTEM CRT_SYSTEM_NTSC
@@ -46,6 +47,8 @@ extern "C" {
 #include "crt_pv1k.h"
 #elif (CRT_SYSTEM == CRT_SYSTEM_TEMP)
 #include "crt_template.h"
+#elif (CRT_SYSTEM == CRT_SYSTEM_NTSCVHS)
+#include "crt_ntscvhs.h"
 #else
 #error No system defined
 #endif
