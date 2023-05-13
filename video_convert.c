@@ -40,7 +40,9 @@
 static int dooverwrite = 1;
 static int docolor = 1;
 static int progressive = 0;
+#if (CRT_SYSTEM == CRT_SYSTEM_NTSCVHS)
 static int doaberration = 0;
+#endif
 
 static int
 stoint(char *s, int *err)
@@ -67,7 +69,11 @@ stoint(char *s, int *err)
 static void
 usage(char *p)
 {
+#if (CRT_SYSTEM == CRT_SYSTEM_NTSCVHS)
     printf("usage: %s -m|o|a|p|h num_frames outwidth outheight noise\n", p);
+#else
+    printf("usage: %s -m|o|p|h num_frames outwidth outheight noise\n", p);
+#endif
     printf("sample usage: %s -oa 5000 640 480 0\n", p);
     printf("sample usage: %s - 1400 832 624 12\n", p);
     printf("-- NOTE: the - after the program name is required\n");
@@ -94,7 +100,9 @@ process_args(int argc, char **argv)
         switch (*flags) {
             case 'm': docolor = 0;      break;
             case 'o': dooverwrite = 0;  break;
+#if (CRT_SYSTEM == CRT_SYSTEM_NTSCVHS)
             case 'a': doaberration = 1; break;
+#endif
             case 'p': progressive = 1;  break;
             case 'h': usage(argv[0]); return 0;
             default:
@@ -221,7 +229,9 @@ main(int argc, char **argv)
     ntsc.raw = 0;
     ntsc.hue = 0;
     ntsc.frame = 0;
+#if (CRT_SYSTEM == CRT_SYSTEM_NTSCVHS)
     ntsc.do_aberration = doaberration;
+#endif
 
     crt.blend = 0;
     crt.scanlines = 1;
