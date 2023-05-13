@@ -25,6 +25,9 @@ extern "C" {
 /* 1 = checkered chroma (227.5 chroma clocks per line) */
 #define CRT_CHROMA_PATTERN 1
 
+/* set to zero to remove the noise at the bottom of the frame */
+#define CRT_VHS_NOISE    1
+
 /* chroma clocks (subcarrier cycles) per line */
 #if (CRT_CHROMA_PATTERN == 1)
 #define CRT_CC_LINE 2275
