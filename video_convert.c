@@ -40,6 +40,7 @@
 static int dooverwrite = 1;
 static int docolor = 1;
 static int progressive = 0;
+static int scanlines = 1;
 #if (CRT_SYSTEM == CRT_SYSTEM_NTSCVHS)
 static int doaberration = 0;
 #endif
@@ -70,9 +71,9 @@ static void
 usage(char *p)
 {
 #if (CRT_SYSTEM == CRT_SYSTEM_NTSCVHS)
-    printf("usage: %s -m|o|a|p|h num_frames outwidth outheight noise\n", p);
+    printf("usage: %s -m|o|a|p|s|h num_frames outwidth outheight noise\n", p);
 #else
-    printf("usage: %s -m|o|p|h num_frames outwidth outheight noise\n", p);
+    printf("usage: %s -m|o|p|s|h num_frames outwidth outheight noise\n", p);
 #endif
     printf("sample usage: %s -oa 5000 640 480 0\n", p);
     printf("sample usage: %s - 1400 832 624 12\n", p);
@@ -81,6 +82,7 @@ usage(char *p)
     printf("\tm : monochrome\n");
     printf("\to : do not prompt when overwriting files\n");
     printf("\ta : mess up the bottom of the frame (useful for the VHS look)\n");
+    printf("\ts : fill in gaps between scan lines\n");
     printf("\tp : progressive scan (rather than interlaced)\n");
     printf("\th : print help\n");
     printf("\n");
@@ -103,6 +105,7 @@ process_args(int argc, char **argv)
 #if (CRT_SYSTEM == CRT_SYSTEM_NTSCVHS)
             case 'a': doaberration = 1; break;
 #endif
+            case 's': scanlines = 0;    break;
             case 'p': progressive = 1;  break;
             case 'h': usage(argv[0]); return 0;
             default:
@@ -234,7 +237,7 @@ main(int argc, char **argv)
 #endif
 
     crt.blend = 0;
-    crt.scanlines = 1;
+    crt.scanlines = scanlines;
     crt.saturation = 10;
 
     printf("converting to %dx%d...\n", outw, outh);
