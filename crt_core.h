@@ -35,7 +35,9 @@ extern "C" {
 #define CRT_SYSTEM_NTSCVHS  5 /* standard NTSC VHS */
 
 /* the system to be compiled */
+#ifndef CRT_SYSTEM
 #define CRT_SYSTEM CRT_SYSTEM_NTSC
+#endif
 
 #if (CRT_SYSTEM == CRT_SYSTEM_NES)
 #include "crt_nes.h"
