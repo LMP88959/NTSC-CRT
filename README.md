@@ -81,10 +81,14 @@ cc -O3 -o ntsc *.c
 
 or using CMake on Linux, macOS, or Windows:
 
+**Note:** There are 3 available flags / variables:
+- `LIVE` (default: `off`) - Set to `on` to enable rendering to a video window from an input PPM/BMP image file
+- `VIDEO` (default: `off`) - Set to `on` to enable rendering of sequence of frames. See `video_convert.c` for details
+- `CRT_SYSTEM` (default: `0`) - 0 - CRT_SYSTEM_NTSC (standard NTSC), 5 - CRT_SYSTEM_NTSCVHS (standard NTSC VHS). See `crt_core.h` for details
+  
 ```sh
-cmake -B build
-cmake --build build
-build/ntsc
+cmake -B build -DLIVE=off -DVIDEO=on -DCRT_SYSTEM=5
+cmake --build build --config Release
 ```
 
 The default command line takes a single PPM or BMP image file and outputs a processed PPM or BMP file:
@@ -107,12 +111,34 @@ sample usage: ./ntsc - 832 624 0 90 in.ppm out.ppm
 by default, the image will be full color, interlaced, and scaled to the output dimensions
 ```
 
-There is also the option of "live" rendering to a video window from an input PPM/BMP image file:
+If `-DVIDEO=on` is specified, the command line output will look like this:
 
-```sh
-cmake -B build -Dlive=on
-cmake --build build
-build/ntsc my.ppm
+```
+NTSC/CRT v2.2.1 by EMMIR 2018-2023
+This program does not operate on video files, only sequences of
+images. Please make sure you have the FFMPEG command line tools
+installed and follow these instructions to convert a video
+using the NTSC/CRT library:
+  mkdir frames
+  mkdir output
+  ffmpeg -r 1 -i your_video.mov -r 1 ./frames/$frame%06d.bmp
+  ./ntsc_video.exe <arguments>
+  ffmpeg -r 30 -f image2 -s 640x480 -i ./output/%06d.bmp -vcodec libx264 -crf 10 -pix_fmt yuv420p out.mp4
+
+------------------------------------------------------------
+usage: ntsc_video.exe -m|o|p|s|h num_frames outwidth outheight noise
+sample usage: ntsc_video.exe -oa 5000 640 480 0
+sample usage: ntsc_video.exe - 1400 832 624 12
+-- NOTE: the - after the program name is required
+------------------------------------------------------------
+        m : monochrome
+        o : do not prompt when overwriting files
+        a : mess up the bottom of the frame (useful for the VHS look)
+        s : fill in gaps between scan lines
+        p : progressive scan (rather than interlaced)
+        h : print help
+
+by default, the image will be full color and interlaced
 ```
 
 ### Adding NTSC-CRT to your C/C++ project:
