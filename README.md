@@ -197,6 +197,7 @@ https://binji.github.io/NTSC-CRT/
 To use the web version, drag a PPM image into the web browser.
 #### Related projects
 https://github.com/LMP88959/PAL-CRT - my PAL modem written in a similar fashion to this library  
+https://github.com/F33RNI/NTSC-VHS-Renderer - Intuitive rendering and GUI for this project  
 https://github.com/svofski/CRT - PAL/SECAM modem in Python/GLSL by @svofski  
 
 ------
