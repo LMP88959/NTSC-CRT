@@ -182,17 +182,17 @@ init_eq(struct EQF *f,
     f->g[2] = g_hi;
     
     crt_sincos14(&sn, &cs, T14_PI * f_lo / rate);
-    if (EQ_P >= 15) {
-        f->lf = 2 * (sn << (EQ_P - 15));
-    } else {
-        f->lf = 2 * (sn >> (15 - EQ_P));
-    }
+#if (EQ_P >= 15)
+    f->lf = 2 * (sn << (EQ_P - 15));
+#else
+    f->lf = 2 * (sn >> (15 - EQ_P));
+#endif
     crt_sincos14(&sn, &cs, T14_PI * f_hi / rate);
-    if (EQ_P >= 15) {
-        f->hf = 2 * (sn << (EQ_P - 15));
-    } else {
-        f->hf = 2 * (sn >> (15 - EQ_P));
-    }
+#if (EQ_P >= 15)
+    f->hf = 2 * (sn << (EQ_P - 15));
+#else
+    f->hf = 2 * (sn >> (15 - EQ_P));
+#endif
 }
 
 static void
@@ -388,8 +388,8 @@ vsync_found:
     field = (field * (ratio / 2));
 
     for (line = CRT_TOP; line < CRT_BOT; line++) {
-        unsigned pos, ln;
-        int scanL, scanR, dx;
+        unsigned pos, ln, scanR;
+        int scanL, dx;
         int L, R;
         unsigned char *cL, *cR;
 #if (CRT_CC_SAMPLES == 4)
