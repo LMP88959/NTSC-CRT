@@ -23,8 +23,8 @@ extern "C" {
     
 /* library version */
 #define CRT_MAJOR 2
-#define CRT_MINOR 2
-#define CRT_PATCH 2
+#define CRT_MINOR 3
+#define CRT_PATCH 0
 
     
 #define CRT_SYSTEM_NTSC     0 /* standard NTSC */
@@ -33,6 +33,7 @@ extern "C" {
 #define CRT_SYSTEM_SNES     3 /* SNES - uses RGB */
 #define CRT_SYSTEM_TEMP     4 /* template implementation */
 #define CRT_SYSTEM_NTSCVHS  5 /* standard NTSC VHS */
+#define CRT_SYSTEM_NESRGB   6 /* encode RGB image with NES artifacts */
 
 /* the system to be compiled */
 #ifndef CRT_SYSTEM
@@ -51,6 +52,8 @@ extern "C" {
 #include "crt_template.h"
 #elif (CRT_SYSTEM == CRT_SYSTEM_NTSCVHS)
 #include "crt_ntscvhs.h"
+#elif (CRT_SYSTEM == CRT_SYSTEM_NESRGB)
+#include "crt_nesrgb.h"
 #else
 #error No system defined
 #endif
