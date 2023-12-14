@@ -25,7 +25,7 @@ if(LIVE)
 	endif()
 
 	set(fw_url https://github.com/LMP88959/PL3D-KC.git)
-	set(fw_tag 3fa35ad)
+	set(fw_tag main)
 	set(fw_args
 	-DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
 	-DCMAKE_BUILD_TYPE=Release
