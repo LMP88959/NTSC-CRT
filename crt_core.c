@@ -611,20 +611,30 @@ vsync_found:
             }
 
             switch (v->out_format) {
-                case CRT_PIX_FORMAT_RGBA:
-                    cL[3] = 0xff; /* FALLTHROUGH */
                 case CRT_PIX_FORMAT_RGB:
                     cL[0] = bb >> 16 & 0xff;
                     cL[1] = bb >>  8 & 0xff;
                     cL[2] = bb >>  0 & 0xff;
                     break;
 
-                case CRT_PIX_FORMAT_BGRA:
-                    cL[3] = 0xff; /* FALLTHROUGH */
+                case CRT_PIX_FORMAT_RGBA:
+                    cL[0] = bb >> 16 & 0xff;
+                    cL[1] = bb >>  8 & 0xff;
+                    cL[2] = bb >>  0 & 0xff;
+                    cL[3] = 0xff;
+                    break;
+
                 case CRT_PIX_FORMAT_BGR:
                     cL[0] = bb >>  0 & 0xff;
                     cL[1] = bb >>  8 & 0xff;
                     cL[2] = bb >> 16 & 0xff;
+                    break;
+
+                case CRT_PIX_FORMAT_BGRA:
+                    cL[0] = bb >>  0 & 0xff;
+                    cL[1] = bb >>  8 & 0xff;
+                    cL[2] = bb >> 16 & 0xff;
+                    cL[3] = 0xff;
                     break;
 
                 case CRT_PIX_FORMAT_ARGB:
