@@ -219,6 +219,8 @@ main(int argc, char **argv)
     }
 
     crt_init(&crt, outw, outh, CRT_PIX_FORMAT_BGRA, output);
+    
+    memset(&ntsc, 0, sizeof(struct NTSC_SETTINGS));
 
     ntsc.data = img;
     ntsc.format = CRT_PIX_FORMAT_BGRA;
