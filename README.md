@@ -206,6 +206,11 @@ As of Feb 15, 2025, BeesNES's developer L. Spiro has an AVX accelerated version 
 
 ------
 
+### Other Software
+Available as a video effect in frei0r: https://github.com/dyne/frei0r
+
+------
+
 ### Other Information
 Web version by @binji (might not be up to date):  
 https://binji.github.io/NTSC-CRT/  
