@@ -218,11 +218,11 @@ main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    crt_init(&crt, outw, outh, CRT_PIX_FORMAT_BGRA, output);
+    crt_init(&crt, outw, outh, CRT_PIX_FORMAT_BGRA, (unsigned char *) output);
     
     memset(&ntsc, 0, sizeof(struct NTSC_SETTINGS));
 
-    ntsc.data = img;
+    ntsc.data = (unsigned char *) img;
     ntsc.format = CRT_PIX_FORMAT_BGRA;
     ntsc.w = imgw;
     ntsc.h = imgh;
